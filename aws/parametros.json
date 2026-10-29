@@ -1,0 +1,26 @@
+[
+    {
+        "ParameterKey": "EnderecosDoSite",
+        "ParameterValue": "https://turmadosjogos.com.br,https://www.turmadosjogos.com.br,https://producao.d2ufc1mue7vu9v.amplifyapp.com,http://localhost:8000"
+    },
+    {
+        "ParameterKey": "ExigirProvaNoContato",
+        "ParameterValue": "sim"
+    },
+    {
+        "ParameterKey": "ZonaDoDominio",
+        "ParameterValue": "Z0608118AOPZOWB5O3R3"
+    },
+    {
+        "ParameterKey": "EmailDoContato",
+        "ParameterValue": "contato@exemplo.com"
+    },
+    {
+        "ParameterKey": "EmailDoLoginPeloSes",
+        "ParameterValue": "nao"
+    },
+    {
+        "ParameterKey": "Dominio",
+        "ParameterValue": "turmadosjogos.com.br"
+    }
+]

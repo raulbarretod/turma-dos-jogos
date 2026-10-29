@@ -1,0 +1,549 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Turma dos Jogos - login dos responsaveis (Cognito), perfis das criancas e progresso nos jogos (DynamoDB)
+  e a API que liga o site ao banco (API Gateway + Lambda).
+
+Parameters:
+  EnderecosDoSite:
+    Type: CommaDelimitedList
+    Description: Enderecos do site que podem usar a API, separados por virgula.
+    Default: https://turmadosjogos.com.br,https://www.turmadosjogos.com.br,https://producao.d2ufc1mue7vu9v.amplifyapp.com,http://localhost:8000
+  Dominio:
+    Type: String
+    Description: Dominio do site; os e-mails do formulario de contato saem de contato@ este dominio.
+    Default: turmadosjogos.com.br
+  ZonaDoDominio:
+    Type: String
+    Description: Zona do dominio no Route 53 (onde entram os registros DKIM do e-mail).
+    Default: Z0608118AOPZOWB5O3R3
+  EmailDoContato:
+    Type: String
+    Description: Caixa que recebe as mensagens do formulario de contato (nao aparece no site).
+    Default: contato@exemplo.com
+  ExigirProvaNoContato:
+    Type: String
+    Description: sim = o formulario de contato so aceita envios com o desafio anti-robo resolvido.
+    AllowedValues: [sim, nao]
+    Default: sim
+  EmailDoLoginPeloSes:
+    Type: String
+    Description: >-
+      sim = codigos de cadastro e de nova senha saem por nao-responda@dominio (SES), sem o limite de 50/dia do Cognito.
+      So ligar depois que a AWS liberar o SES do modo de teste (sandbox).
+    AllowedValues: [sim, nao]
+    Default: nao
+
+Conditions:
+  UsarSes: !Equals [!Ref EmailDoLoginPeloSes, sim]
+
+Resources:
+  # --- login dos responsaveis ---
+  Usuarios:
+    Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain          # apagar a pilha nunca apaga as contas
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: turma-dos-jogos-responsaveis
+      UserPoolTier: LITE
+      DeletionProtection: ACTIVE
+      UsernameAttributes: [email]
+      UsernameConfiguration: { CaseSensitive: false }
+      AutoVerifiedAttributes: [email]
+      # trocar o e-mail so vale depois de confirmar o codigo enviado ao novo endereco;
+      # ate la o login continua com o e-mail antigo (ninguem "ocupa" o e-mail de outra pessoa)
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate: [email]
+      # antes de criar a conta, a funcao confere e grava o aceite da politica (no banco, fora do alcance do usuario)
+      LambdaConfig: { PreSignUp: !GetAtt Funcao.Arn }
+      AccountRecoverySetting:
+        RecoveryMechanisms: [{ Name: verified_email, Priority: 1 }]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireNumbers: true
+          RequireLowercase: false
+          RequireUppercase: false
+          RequireSymbols: false
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        # data e versao da politica de privacidade aceita no cadastro (consentimento do responsavel, LGPD art. 14)
+        - Name: consentimento
+          AttributeDataType: String
+          Mutable: true
+          StringAttributeConstraints: { MinLength: '1', MaxLength: '100' }
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+        EmailSubject: 'Turma dos Jogos: seu c?digo'
+        EmailMessage: 'Ol?! Seu c?digo da Turma dos Jogos ? {####}. Se n?o foi voc? que pediu, pode ignorar este e-mail.'
+      EmailConfiguration: !If
+        - UsarSes
+        - EmailSendingAccount: DEVELOPER
+          SourceArn: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${Dominio}'
+          From: !Sub '"Turma dos Jogos" <nao-responda@${Dominio}>'
+        - EmailSendingAccount: COGNITO_DEFAULT
+
+  AppDoSite:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: site
+      UserPoolId: !Ref Usuarios
+      GenerateSecret: false
+      ExplicitAuthFlows: [ALLOW_USER_PASSWORD_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      # acesso curto: um acesso roubado ou de quem saiu vale no maximo 15 min (o site renova sozinho)
+      AccessTokenValidity: 15
+      IdTokenValidity: 15
+      RefreshTokenValidity: 30
+      TokenValidityUnits: { AccessToken: minutes, IdToken: minutes, RefreshToken: days }
+      ReadAttributes: [email, email_verified, 'custom:consentimento']
+      # o usuario nao grava nada na propria conta: o e-mail vem do usuario do login e nao pode ser trocado pelo site
+      # (evita mandar codigos para o e-mail de outras pessoas); o aceite vai para o banco pelo gatilho PreSignUp.
+      # "locale" (idioma) fica so porque a lista nao pode ser vazia (vazia = todos os atributos liberados)
+      WriteAttributes: [locale]
+
+  # --- perfis e progresso: uma linha por crianca (dono = conta do responsavel) ---
+  Perfis:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: turma-dos-jogos-perfis
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: dono, AttributeType: S }
+        - { AttributeName: id, AttributeType: S }
+      KeySchema:
+        - { AttributeName: dono, KeyType: HASH }
+        - { AttributeName: id, KeyType: RANGE }
+      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+      # linhas temporarias (desafios usados do contato) somem sozinhas depois do horario em "expira"
+      TimeToLiveSpecification: { AttributeName: expira, Enabled: true }
+      DeletionProtectionEnabled: true
+
+  # --- API: o site conversa com o banco por aqui ---
+  PapelDaFuncao:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - { Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: 'sts:AssumeRole' }
+      ManagedPolicyArns: ['arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole']
+      Policies:
+        - PolicyName: perfis
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['dynamodb:Query', 'dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem']
+                Resource: !GetAtt Perfis.Arn
+              - Effect: Allow
+                Action: ['ses:SendEmail']
+                Resource:
+                  - !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${Dominio}'
+                  - !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${EmailDoContato}'
+
+  RegistrosDaFuncao:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/turma-dos-jogos-api
+      RetentionInDays: 30
+
+  Funcao:
+    Type: AWS::Lambda::Function
+    DependsOn: RegistrosDaFuncao
+    Properties:
+      FunctionName: turma-dos-jogos-api
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt PapelDaFuncao.Arn
+      MemorySize: 256
+      Timeout: 10
+      Environment:
+        Variables:
+          TABELA: !Ref Perfis
+          CONTATO_DE: !Sub '"Turma dos Jogos" <contato@${Dominio}>'
+          CONTATO_PARA: !Ref EmailDoContato
+          EXIGIR_PROVA: !Ref ExigirProvaNoContato
+      Code:
+        ZipFile: |
+          // Perfis das criancas e progresso nos jogos: toda rota exige login (o "dono" vem do token do Cognito).
+          // Sem login: o formulario de contato (com desafio anti-robo) e o gatilho do Cognito que registra o aceite no cadastro.
+          const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+          const { DynamoDBDocumentClient, QueryCommand, GetCommand, PutCommand, UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
+          const { SESv2Client, SendEmailCommand } = require('@aws-sdk/client-sesv2');
+          const { randomUUID, randomBytes, randomInt, createHash, createHmac, timingSafeEqual } = require('crypto');
+          const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), { marshallOptions: { removeUndefinedValues: true } });
+          const ses = new SESv2Client({});
+          const TABELA = process.env.TABELA, MAX_PERFIS = 6;
+          const resp = (status, body) => ({ statusCode: status, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) });
+          const nomeValido = n => typeof n === 'string' && (n = n.trim()) && n.length <= 20 ? n : null;
+          const corValida = c => Number.isInteger(c) && c >= 0 && c < 12 ? c : 0;
+          const textoValido = (t, max) => typeof t === 'string' && (t = t.trim()) && t.length <= max ? t : null;
+          const umaLinha = t => t.replace(/[\r\n\t]+/g, ' ');
+          // linhas internas da tabela (aceite, configuracao) comecam com "#": nunca aparecem nem mudam como perfil
+          const interno = id => typeof id === 'string' && id.startsWith('#');
+          const soPerfis = itens => itens.filter(p => !interno(p.id));
+
+          // --- licenca paga: linha "#licenca" da conta { validaAte, plano }; so o administrador (e depois o pagamento) grava ---
+          // sem licenca: o progresso nao fica salvo (so o desenho do perfil, chaves "turma:"), sem historico e sem jogos pagos
+          const licencaDe = itens => {
+            const l = itens.find(p => p.id === '#licenca');
+            return { ativa: !!l && Date.parse(l.validaAte) > Date.now(), validaAte: l?.validaAte ?? null, plano: l?.plano ?? null };
+          };
+          const temLicenca = async dono => licencaDe([(await db.send(new GetCommand({ TableName: TABELA,
+            Key: { dono, id: '#licenca' } }))).Item].filter(Boolean)).ativa;
+          const semLicencaSoPerfil = dados => Object.fromEntries(Object.entries(dados ?? {}).filter(([k]) => k.startsWith('turma:')));
+
+          // --- historico das partidas (so com licenca): particao separada "<conta>#hist", uma linha por partida ---
+          // id = "<perfil>#<data ISO>#<sorteio>": fica em ordem de data e da para buscar por perfil; some depois de ~13 meses
+          const HIST = dono => `${dono}#hist`, GUARDAR_DIAS = 400;
+          const inteiro = (n, max) => Number.isInteger(n) && n >= 0 && n <= max ? n : 0;
+          function partidaValida(p, agora) {
+            if (!p || typeof p.jogo !== 'string' || !/^[a-z0-9-]{2,30}$/.test(p.jogo)) return null;
+            const quando = Date.parse(p.quando);
+            const data = new Date(quando > agora - 7 * 864e5 && quando <= agora ? quando : agora).toISOString();
+            return { jogo: p.jogo, detalhe: textoValido(p.detalhe, 60) ?? '', pontos: inteiro(p.pontos, 100000),
+              acertos: inteiro(p.acertos, 10000), erros: inteiro(p.erros, 10000), segundos: inteiro(p.segundos, 86400), data };
+          }
+          async function apagarHistorico(dono, perfil) {
+            let inicio;
+            do {
+              const r = await db.send(new QueryCommand({ TableName: TABELA, ExclusiveStartKey: inicio, ProjectionExpression: 'dono, id',
+                KeyConditionExpression: perfil ? 'dono = :d AND begins_with(id, :p)' : 'dono = :d',
+                ExpressionAttributeValues: { ':d': HIST(dono), ...(perfil && { ':p': `${perfil}#` }) } }));
+              for (const i of r.Items) await db.send(new DeleteCommand({ TableName: TABELA, Key: { dono: i.dono, id: i.id } }));
+              inicio = r.LastEvaluatedKey;
+            } while (inicio);
+          }
+
+          // --- conteudo dos jogos pagos (ex.: palavras do Palavra Certa): linha { dono: "#conteudo", id: jogo, valor } ---
+          // guardado na memoria da funcao por 10 minutos (conteudo novo aparece sozinho depois disso)
+          const conteudos = {};
+          async function conteudoDo(jogo) {
+            if (!/^[a-z0-9-]{2,30}$/.test(jogo ?? '')) return null;
+            const c = conteudos[jogo];
+            if (c && c.ate > Date.now()) return c.valor;
+            const valor = (await db.send(new GetCommand({ TableName: TABELA, Key: { dono: '#conteudo', id: jogo } }))).Item?.valor ?? null;
+            if (valor) conteudos[jogo] = { valor, ate: Date.now() + 10 * 60 * 1000 };   // "nao existe" nao fica guardado
+            return valor;
+          }
+
+          // --- aceite da Politica de Privacidade e dos Termos, gravado pelo gatilho "antes do cadastro" do Cognito ---
+          // fica no banco, onde o proprio usuario nao consegue alterar
+          async function antesDoCadastro(event) {
+            if (event.triggerSource !== 'PreSignUp_SignUp') return event;   // contas criadas pelo administrador
+            const aceite = String(event.request.clientMetadata?.consentimento ?? event.request.userAttributes?.['custom:consentimento'] ?? '');
+            const politica = aceite.match(/politica-v\d+/)?.[0];
+            if (!politica) throw new Error('E preciso aceitar a Politica de Privacidade e os Termos de Uso.');
+            await db.send(new PutCommand({ TableName: TABELA,
+              Item: { dono: event.userName, id: '#consentimento', politica, data: new Date().toISOString() } }));
+            return event;
+          }
+
+          // --- desafio anti-robo do contato ---
+          // o navegador acha o numero (0 a DIFICULDADE) que gera o hash pedido: ~1 s para uma pessoa, caro para spam em massa.
+          // O desafio vem assinado (so esta funcao cria desafios validos), vale 10 minutos e so pode ser usado uma vez.
+          const DIFICULDADE = 100000;
+          let segredo;
+          async function segredoDoContato() {
+            if (segredo) return segredo;
+            const chave = { dono: '#config', id: 'segredo-contato' };   // criado sozinho no primeiro uso
+            await db.send(new PutCommand({ TableName: TABELA, Item: { ...chave, valor: randomBytes(32).toString('hex') },
+              ConditionExpression: 'attribute_not_exists(dono)' })).catch(e => { if (e.name !== 'ConditionalCheckFailedException') throw e; });
+            return segredo = (await db.send(new GetCommand({ TableName: TABELA, Key: chave, ConsistentRead: true }))).Item.valor;
+          }
+          const sha256 = t => createHash('sha256').update(t).digest('hex');
+          const assinar = async t => createHmac('sha256', await segredoDoContato()).update(t).digest('hex');
+          async function novoDesafio() {
+            const salt = `${randomBytes(12).toString('hex')}.${Date.now() + 10 * 60 * 1000}`;
+            const desafio = sha256(salt + randomInt(DIFICULDADE));
+            return resp(200, { salt, desafio, max: DIFICULDADE, assinatura: await assinar(desafio) });
+          }
+          async function provaValida(p) {
+            if (!p || typeof p.salt !== 'string' || p.salt.length > 64 || typeof p.desafio !== 'string' ||
+                typeof p.assinatura !== 'string' || !Number.isInteger(p.numero)) return false;
+            const expira = Number(p.salt.split('.')[1]);
+            if (!(expira > Date.now()) || sha256(p.salt + p.numero) !== p.desafio) return false;
+            const certa = Buffer.from(await assinar(p.desafio)), recebida = Buffer.from(p.assinatura);
+            if (certa.length !== recebida.length || !timingSafeEqual(certa, recebida)) return false;
+            // uso unico: o desafio usado fica registrado ate expirar (o banco apaga sozinho pelo campo "expira")
+            try {
+              await db.send(new PutCommand({ TableName: TABELA, Item: { dono: '#contato', id: p.salt, expira: Math.ceil(expira / 1000) },
+                ConditionExpression: 'attribute_not_exists(dono)' }));
+              return true;
+            } catch (e) { if (e.name === 'ConditionalCheckFailedException') return false; throw e; }
+          }
+
+          async function contato(texto) {
+            let b;
+            try { b = JSON.parse(texto || '{}'); } catch { return resp(400, { erro: 'json' }); }
+            if (b.site) return resp(200, {});   // campo-isca preenchido: robo de spam; finge que enviou
+            const nome = textoValido(b.nome, 80), email = textoValido(b.email, 120);
+            const assunto = textoValido(b.assunto, 120), mensagem = textoValido(b.mensagem, 3000);
+            if (!nome || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !assunto || !mensagem || mensagem.length < 10)
+              return resp(400, { erro: 'contato' });
+            if ((b.prova || process.env.EXIGIR_PROVA === 'sim') && !(await provaValida(b.prova))) return resp(403, { erro: 'prova' });
+            await ses.send(new SendEmailCommand({
+              FromEmailAddress: process.env.CONTATO_DE,
+              Destination: { ToAddresses: [process.env.CONTATO_PARA] },
+              ReplyToAddresses: [email],   // "Responder" no e-mail vai direto para quem escreveu
+              Content: { Simple: {
+                Subject: { Data: 'Contato pelo site: ' + umaLinha(assunto), Charset: 'UTF-8' },
+                Body: { Text: { Data: `Nome: ${umaLinha(nome)}\nE-mail: ${email}\nAssunto: ${umaLinha(assunto)}\n\n${mensagem}\n`, Charset: 'UTF-8' } },
+              } },
+            }));
+            return resp(200, {});
+          }
+
+          exports.handler = async event => {
+            if (event.triggerSource) return antesDoCadastro(event);   // chamado pelo Cognito, nao pela API
+            const texto = event.body ? (event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString() : event.body) : '';
+            if (event.routeKey === 'GET /contato/desafio' || event.routeKey === 'POST /contato') {
+              try { return event.routeKey === 'POST /contato' ? await contato(texto) : await novoDesafio(); }
+              catch (e) { console.error(e); return resp(500, { erro: 'interno' }); }
+            }
+            const dono = event.requestContext.authorizer.jwt.claims.sub;
+            const id = event.pathParameters?.id;
+            if (interno(id)) return resp(404, { erro: 'perfil' });
+            let body = {};
+            try { if (texto) body = JSON.parse(texto); } catch { return resp(400, { erro: 'json' }); }
+            const linhas = async () => (await db.send(new QueryCommand({ TableName: TABELA,
+              KeyConditionExpression: 'dono = :d', ExpressionAttributeValues: { ':d': dono } }))).Items;
+            try {
+              switch (event.routeKey) {
+                case 'GET /perfis': {
+                  // sem licenca, o progresso guardado de antes fica no banco, mas nao aparece (volta se assinar)
+                  const itens = await linhas(), ativa = licencaDe(itens).ativa;
+                  return resp(200, soPerfis(itens).map(({ dono, ...p }) => ativa ? p : { ...p, dados: semLicencaSoPerfil(p.dados) }));
+                }
+                case 'GET /conta':
+                  return resp(200, { licenca: licencaDe(await linhas()) });
+                case 'GET /perfis/{id}/partidas': {
+                  if (!(await temLicenca(dono))) return resp(403, { erro: 'licenca' });
+                  const dias = Math.min(400, Math.max(1, parseInt(event.queryStringParameters?.dias, 10) || 30));
+                  const desde = new Date(Date.now() - dias * 864e5).toISOString();
+                  const partidas = [];
+                  let inicio;
+                  do {   // do mais novo para o mais antigo, no maximo 2000 partidas
+                    const r = await db.send(new QueryCommand({ TableName: TABELA, ExclusiveStartKey: inicio, ScanIndexForward: false,
+                      KeyConditionExpression: 'dono = :d AND id BETWEEN :de AND :ate',
+                      ExpressionAttributeValues: { ':d': HIST(dono), ':de': `${id}#${desde}`, ':ate': `${id}#~` } }));
+                    partidas.push(...r.Items.map(({ dono, id, expira, ...p }) => p));
+                    inicio = r.LastEvaluatedKey;
+                  } while (inicio && partidas.length < 2000);
+                  return resp(200, partidas);
+                }
+                case 'POST /perfis/{id}/partidas': {
+                  if (!(await temLicenca(dono))) return resp(403, { erro: 'licenca' });
+                  const lista = Array.isArray(body.partidas) ? body.partidas : [];
+                  if (!lista.length || lista.length > 20 || texto.length > 20000) return resp(400, { erro: 'partidas' });
+                  const perfil = (await db.send(new GetCommand({ TableName: TABELA, Key: { dono, id } }))).Item;
+                  if (!perfil) return resp(404, { erro: 'perfil' });
+                  const agora = Date.now(), expira = Math.ceil(agora / 1000) + GUARDAR_DIAS * 86400;
+                  for (const p of lista.map(p => partidaValida(p, agora)).filter(Boolean))
+                    await db.send(new PutCommand({ TableName: TABELA,
+                      Item: { dono: HIST(dono), id: `${id}#${p.data}#${randomBytes(3).toString('hex')}`, ...p, expira } }));
+                  return resp(200, {});
+                }
+                case 'GET /jogos/{jogo}/conteudo': {
+                  if (!(await temLicenca(dono))) return resp(403, { erro: 'licenca' });
+                  const valor = await conteudoDo(event.pathParameters?.jogo);
+                  if (!valor) return resp(404, { erro: 'jogo' });
+                  // o conteudo e gravado como texto JSON (ferramentas/enviar-conteudo.ps1): vai do jeito que esta
+                  return typeof valor === 'string' ? { ...resp(200), body: valor } : resp(200, valor);
+                }
+                case 'POST /perfis': {
+                  const nome = nomeValido(body.nome);
+                  if (!nome) return resp(400, { erro: 'nome' });
+                  if (soPerfis(await linhas()).length >= MAX_PERFIS) return resp(409, { erro: 'limite' });
+                  const p = { id: randomUUID().slice(0, 8), nome, cor: corValida(body.cor), dados: {}, criado: new Date().toISOString() };
+                  await db.send(new PutCommand({ TableName: TABELA, Item: { dono, ...p } }));
+                  return resp(201, p);
+                }
+                case 'PATCH /perfis/{id}': {
+                  const nome = nomeValido(body.nome);
+                  if (!nome) return resp(400, { erro: 'nome' });
+                  await db.send(new UpdateCommand({ TableName: TABELA, Key: { dono, id }, ConditionExpression: 'attribute_exists(dono)',
+                    UpdateExpression: 'SET nome = :n, cor = :c', ExpressionAttributeValues: { ':n': nome, ':c': corValida(body.cor) } }));
+                  return resp(200, {});
+                }
+                case 'DELETE /perfis/{id}':
+                  await db.send(new DeleteCommand({ TableName: TABELA, Key: { dono, id } }));
+                  await apagarHistorico(dono, id);
+                  return resp(200, {});
+                case 'PATCH /perfis/{id}/dados': {
+                  // junta as chaves enviadas ao progresso ja salvo (cada jogo usa o prefixo dele, ex.: "cobra:best")
+                  const chaves = Object.keys(body);
+                  if (!chaves.length) return resp(200, {});
+                  if (chaves.length > 50 || texto.length > 100000 || chaves.some(k => !/^[a-z0-9_:.-]{1,60}$/i.test(k)))
+                    return resp(400, { erro: 'dados' });
+                  // conta sem licenca: so grava o desenho do perfil (chaves "turma:"), nunca recordes e medalhas
+                  if (chaves.some(k => !k.startsWith('turma:')) && !(await temLicenca(dono))) return resp(403, { erro: 'licenca' });
+                  const nomes = { '#d': 'dados' }, valores = {};
+                  const sets = chaves.map((k, i) => { nomes[`#k${i}`] = k; valores[`:v${i}`] = body[k]; return `#d.#k${i} = :v${i}`; });
+                  await db.send(new UpdateCommand({ TableName: TABELA, Key: { dono, id }, ConditionExpression: 'attribute_exists(dono)',
+                    UpdateExpression: 'SET ' + sets.join(', '), ExpressionAttributeNames: nomes, ExpressionAttributeValues: valores }));
+                  return resp(200, {});
+                }
+                case 'DELETE /conta':
+                  // o responsavel excluiu a conta: apaga os perfis, o progresso e o historico de todas as criancas,
+                  // o registro do aceite e a licenca
+                  for (const p of await linhas()) await db.send(new DeleteCommand({ TableName: TABELA, Key: { dono, id: p.id } }));
+                  await apagarHistorico(dono);
+                  return resp(200, {});
+              }
+              return resp(404, { erro: 'rota' });
+            } catch (e) {
+              if (e.name === 'ConditionalCheckFailedException') return resp(404, { erro: 'perfil' });
+              console.error(e);
+              return resp(500, { erro: 'interno' });
+            }
+          };
+
+  Api:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: turma-dos-jogos
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins: !Ref EnderecosDoSite
+        AllowMethods: [GET, POST, PATCH, DELETE]
+        AllowHeaders: [authorization, content-type]
+        MaxAge: 3600
+
+  Autorizador:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref Api
+      Name: cognito
+      AuthorizerType: JWT
+      IdentitySource: ['$request.header.Authorization']
+      JwtConfiguration:
+        Issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${Usuarios}'
+        Audience: [!Ref AppDoSite]
+
+  Integracao:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref Api
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt Funcao.Arn
+      PayloadFormatVersion: '2.0'
+
+  RotaListar:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'GET /perfis', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  RotaCriar:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'POST /perfis', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  RotaEditar:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'PATCH /perfis/{id}', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  RotaApagar:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'DELETE /perfis/{id}', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  RotaDados:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'PATCH /perfis/{id}/dados', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  RotaExcluirConta:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'DELETE /conta', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  # licenca paga: situacao da conta, historico das partidas e conteudo dos jogos pagos
+  RotaConta:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'GET /conta', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  RotaHistorico:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'GET /perfis/{id}/partidas', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  RotaNovaPartida:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'POST /perfis/{id}/partidas', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+  RotaConteudo:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'GET /jogos/{jogo}/conteudo', AuthorizationType: JWT, AuthorizerId: !Ref Autorizador, Target: !Sub 'integrations/${Integracao}' }
+
+  # formulario de contato: sem login, por isso tem limite proprio bem baixo (ver Estagio)
+  RotaContato:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'POST /contato', AuthorizationType: NONE, Target: !Sub 'integrations/${Integracao}' }
+  RotaDesafio:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: 'GET /contato/desafio', AuthorizationType: NONE, Target: !Sub 'integrations/${Integracao}' }
+
+  Estagio:
+    Type: AWS::ApiGatewayV2::Stage
+    DependsOn: [RotaContato, RotaDesafio]
+    Properties:
+      ApiId: !Ref Api
+      StageName: '$default'
+      AutoDeploy: true
+      # limite de pedidos por segundo: protege contra abuso e contas inesperadas
+      DefaultRouteSettings: { ThrottlingBurstLimit: 50, ThrottlingRateLimit: 20 }
+      RouteSettings:
+        'POST /contato': { ThrottlingBurstLimit: 3, ThrottlingRateLimit: 1 }
+        'GET /contato/desafio': { ThrottlingBurstLimit: 5, ThrottlingRateLimit: 2 }
+
+  # --- e-mail do formulario de contato (SES) ---
+  # dominio verificado por DKIM (registros abaixo, no Route 53): os e-mails saem de contato@dominio
+  DominioDeEmail:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: !Ref Dominio
+  Dkim1:
+    Type: AWS::Route53::RecordSet
+    Properties: { HostedZoneId: !Ref ZonaDoDominio, Type: CNAME, TTL: '1800',
+      Name: !GetAtt DominioDeEmail.DkimDNSTokenName1, ResourceRecords: [!GetAtt DominioDeEmail.DkimDNSTokenValue1] }
+  Dkim2:
+    Type: AWS::Route53::RecordSet
+    Properties: { HostedZoneId: !Ref ZonaDoDominio, Type: CNAME, TTL: '1800',
+      Name: !GetAtt DominioDeEmail.DkimDNSTokenName2, ResourceRecords: [!GetAtt DominioDeEmail.DkimDNSTokenValue2] }
+  Dkim3:
+    Type: AWS::Route53::RecordSet
+    Properties: { HostedZoneId: !Ref ZonaDoDominio, Type: CNAME, TTL: '1800',
+      Name: !GetAtt DominioDeEmail.DkimDNSTokenName3, ResourceRecords: [!GetAtt DominioDeEmail.DkimDNSTokenValue3] }
+  # contra e-mails falsos em nome do dominio: SPF diz que so o SES envia por ele;
+  # DMARC pede aos provedores (Gmail, Hotmail...) que mandem para o spam o que nao vier assinado (DKIM) pelo dominio
+  Spf:
+    Type: AWS::Route53::RecordSet
+    Properties: { HostedZoneId: !Ref ZonaDoDominio, Name: !Ref Dominio, Type: TXT, TTL: '3600',
+      ResourceRecords: ['"v=spf1 include:amazonses.com -all"'] }
+  Dmarc:
+    Type: AWS::Route53::RecordSet
+    Properties: { HostedZoneId: !Ref ZonaDoDominio, Name: !Sub '_dmarc.${Dominio}', Type: TXT, TTL: '3600',
+      ResourceRecords: ['"v=DMARC1; p=quarantine; adkim=r; aspf=r"'] }
+  # caixa da equipe: enquanto o SES estiver em modo de teste ("sandbox"), so envia para enderecos verificados.
+  # A AWS manda um e-mail de confirmacao para esta caixa; e preciso clicar no link uma vez.
+  CaixaDaEquipe:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: !Ref EmailDoContato
+
+  PermissaoDaApi:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Funcao
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*'
+
+  # o Cognito chama a funcao antes de cada cadastro (registro do aceite)
+  PermissaoDoCognito:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Funcao
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt Usuarios.Arn
+
+Outputs:
+  Regiao:
+    Value: !Ref AWS::Region
+  ClientId:
+    Value: !Ref AppDoSite
+  UserPoolId:
+    Value: !Ref Usuarios
+  ApiUrl:
+    Value: !GetAtt Api.ApiEndpoint
+
