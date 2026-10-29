@@ -6,7 +6,7 @@ import { extname, join, normalize } from 'node:path';
 
 const PASTA = join(import.meta.dirname, 'site');
 const TIPOS = { '.html':'text/html; charset=utf-8', '.css':'text/css', '.js':'text/javascript', '.png':'image/png',
-  '.webp':'image/webp', '.webmanifest':'application/manifest+json', '.svg':'image/svg+xml' };
+  '.webp':'image/webp', '.webmanifest':'application/manifest+json', '.svg':'image/svg+xml', '.txt':'text/plain; charset=utf-8', '.xml':'application/xml' };
 
 createServer(async (req, res) => {
   let caminho = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([\\/]\.\.)+/, '');

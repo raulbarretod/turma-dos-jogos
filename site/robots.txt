@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://turmadosjogos.com.br/sitemap.xml
