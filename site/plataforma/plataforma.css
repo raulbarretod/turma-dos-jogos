@@ -100,11 +100,11 @@ html[data-tema="claro"] .tema-btn .ic-sol, html:not([data-tema="claro"]) .tema-b
 .entrada { min-height:100%; display:flex; flex-direction:column; }
 .topo, .hero { box-sizing:border-box; width:100%; max-width:1180px; margin-inline:auto; padding-inline:24px; }
 .topo { display:flex; align-items:center; gap:24px; padding-block:18px; }
-.marca, .login-marca { display:flex; align-items:center; gap:12px; color:var(--ink); text-decoration:none;
+.marca { display:flex; align-items:center; gap:12px; color:var(--ink); text-decoration:none;
   font:800 25px/.95 var(--titulo); }
-.marca span, .login-marca span { display:grid; }
-.marca em, .login-marca em { font-style:normal; color:var(--brand); }
-.marca svg, .login-marca svg { flex:none; filter:drop-shadow(0 8px 16px #1f9d5540); }
+.marca span { display:grid; }
+.marca em { font-style:normal; color:var(--brand); }
+.marca svg { flex:none; filter:drop-shadow(0 8px 16px #1f9d5540); }
 .menu { display:flex; gap:30px; margin-left:auto; }
 .menu a { padding-block:6px; font:700 15px var(--texto); color:var(--ink); text-decoration:none; border-bottom:3px solid transparent; }
 .menu a:hover, .menu a[aria-current] { color:var(--brand); }
@@ -114,32 +114,25 @@ html[data-tema="claro"] .tema-btn .ic-sol, html:not([data-tema="claro"]) .tema-b
   background:var(--surface); border:1.5px solid var(--brand); box-shadow:none; }
 .topo-entrar svg { width:18px; height:18px; color:var(--brand); }
 
-.hero { display:grid; grid-template-columns:minmax(0, 1fr) 400px; column-gap:56px; align-items:start; padding-top:22px; }
-.hero-texto { display:grid; gap:18px; align-content:start; padding-top:10px; }
-.selo { justify-self:start; display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 5px; border-radius:999px;
-  font:800 12px var(--texto); letter-spacing:.06em; text-transform:uppercase; color:var(--selo-ink); background:var(--selo-bg); }
-.selo svg { box-sizing:border-box; width:22px; height:22px; padding:3px; border-radius:50%; color:#fff; background:#ffc234; }
-.hero h1 { margin:0; font-size:clamp(38px, 5.4vw, 62px); line-height:1.02; letter-spacing:-.01em; color:var(--ink); text-wrap:balance; }
-.hero-sub { max-width:34em; font-size:17px; line-height:1.6; color:var(--ink-2); }
+.hero { display:grid; grid-template-columns:minmax(0, 1fr) 420px; column-gap:64px; align-items:center; padding-top:28px; }
+.hero-texto { display:grid; gap:22px; align-content:start; }
+.hero h1 { margin:0; font-size:clamp(40px, 5.6vw, 66px); line-height:1; letter-spacing:-.015em; color:var(--ink); text-wrap:balance; }
+.hero-sub { max-width:32em; font-size:18px; line-height:1.6; color:var(--ink-2); }
 .hero-sub b { color:var(--ink); }
-.destaques { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; max-width:470px; margin:4px 0 0; padding:0; list-style:none; }
-.destaques li { display:grid; justify-items:center; gap:8px; text-align:center; font:700 14px/1.3 var(--texto); color:var(--ink); }
+/* destaques marcados com o "+" do direcional do logo, nas cores dos botões do controle */
+.destaques { display:grid; gap:12px; margin:0; padding:0; list-style:none; }
+.destaques li { display:flex; align-items:center; gap:14px; font:700 16px/1.3 var(--texto); color:var(--ink); }
+.destaques li::before { content:""; flex:none; width:18px; height:18px;
+  background:linear-gradient(var(--mais) 0 0) center/100% 6px no-repeat, linear-gradient(var(--mais) 0 0) center/6px 100% no-repeat; }
+.destaques li:nth-child(1) { --mais:var(--brand); }
+.destaques li:nth-child(2) { --mais:var(--pink); }
+.destaques li:nth-child(3) { --mais:var(--gold); }
 /* ícone branco num quadradinho colorido */
 .ic { display:grid; place-items:center; width:44px; height:44px; border-radius:12px; color:#fff; background:var(--ic-fundo);
   box-shadow:0 8px 18px color-mix(in srgb, var(--ic-fundo) 35%, transparent); }
 .ic svg { width:24px; height:24px; }
 .ic.roxo { --ic-fundo:#7c5ce6; } .ic.ouro { --ic-fundo:#f5a623; } .ic.verde { --ic-fundo:#1f9d55; } .ic.azul { --ic-fundo:#3f8ee6; }
 
-/* quadro de login */
-.login-card { grid-column:2; grid-row:1; position:relative; z-index:2; display:grid; gap:14px; padding:26px 28px 22px;
-  text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:24px;
-  box-shadow:0 24px 60px var(--sombra); }
-.login-marca { justify-content:center; font-size:27px; }
-.login-card .eyebrow { justify-self:center; margin-top:-6px; font:700 14px var(--texto); letter-spacing:0; text-transform:none; color:var(--brand); }
-.tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.tabs button { justify-self:stretch; padding:11px; font:700 15px var(--texto); letter-spacing:0; text-transform:none; color:var(--brand);
-  background:var(--brand-soft); border-radius:999px; box-shadow:none; }
-.tabs button[aria-pressed="true"] { color:var(--brand-ink); background:var(--brand); box-shadow:0 6px 16px color-mix(in srgb, var(--brand) 30%, transparent); }
 .field { display:grid; gap:8px; text-align:left; }
 .field > span:first-child, .field > label { font:800 12px var(--texto); letter-spacing:.08em; text-transform:uppercase; color:var(--brand); }
 .field input, .field textarea { box-sizing:border-box; width:100%; padding:13px 14px; font:600 16px var(--texto); color:var(--ink);
@@ -149,66 +142,136 @@ html[data-tema="claro"] .tema-btn .ic-sol, html:not([data-tema="claro"]) .tema-b
 .campo { position:relative; display:block; }
 .campo > svg { position:absolute; left:14px; top:50%; width:20px; height:20px; transform:translateY(-50%); color:var(--brand); pointer-events:none; }
 .campo input { padding-left:46px; }
+.note a, .aceite a { color:var(--link); }
+.ok:empty { display:none; }
+.aceite { display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start; text-align:left; cursor:pointer; }
+.aceite input { width:18px; height:18px; margin:1px 0 0; }
+
+/* ----- login: console portátil -----
+   O casco, a moldura e a tela não mudam com o tema claro/escuro: é um aparelho por cima da página. */
+.console { --casco:#ffc23d; --casco-luz:#ffe08a; --casco-sombra:#dd960c; --casco-ink:#5a3a00;
+  --moldura:#262b5c; --tela:#e4f1da; --tela-ink:#14284b; --tela-ink-2:#3d4f6a;
+  --botao-a:#d6336c; --botao-a-borda:#a01f4c; --led:#4fd16e;
+  grid-column:2; grid-row:1; position:relative; z-index:2; display:grid; gap:16px; padding:18px 22px 18px;
+  text-align:left; color:var(--tela-ink); color-scheme:light;
+  background:linear-gradient(172deg, var(--casco-luz) 0, var(--casco) 16%, var(--casco) 84%, var(--casco-sombra) 100%);
+  border-radius:28px 28px 72px 28px;
+  box-shadow:inset 0 2px 0 #fff9, inset 0 -6px 0 var(--casco-sombra), 0 28px 60px var(--sombra); }
+.console-topo { display:flex; align-items:center; gap:10px; font:800 19px/1 var(--titulo); color:var(--casco-ink); }
+.console-topo svg { flex:none; }
+/* luz de ligado: acende ao abrir, pisca enquanto espera a resposta e fica rosa quando aparece um erro */
+.led { margin-left:auto; width:10px; height:10px; border-radius:50%; background:var(--led);
+  box-shadow:0 0 0 3px #0000001f, 0 0 12px var(--led); animation:acender .2s .3s both; }
+.console:has(#loginError:not(:empty)) { --led:#ff4f8b; }
+.console:has(#loginSubmit:disabled) { --led:#ff9f1c; }
+.console:has(#loginSubmit:disabled) .led { animation:piscar .6s steps(2, jump-none) infinite; }
+@keyframes acender { from { background:#3c5a3f; box-shadow:0 0 0 3px #0000001f; } }
+@keyframes piscar { to { opacity:.25; } }
+
+.moldura { padding:14px; background:var(--moldura); border-radius:14px 14px 40px 14px; box-shadow:inset 0 3px 0 #0006; }
+.tela { position:relative; display:grid; gap:14px; padding:16px 16px 14px; overflow:hidden; color:var(--tela-ink);
+  background:var(--tela); border-radius:6px; box-shadow:inset 0 6px 14px #14284b24; }
+/* a tela "liga" uma vez ao abrir a página: a cortina escura desce em degraus, como uma varredura */
+.tela::after { content:""; position:absolute; inset:0; background:var(--moldura); pointer-events:none;
+  animation:ligar .7s steps(7, end) .3s both; }
+@keyframes ligar { to { transform:translateY(100%); } }
+.tela-titulo { font:700 15px/1 "Pixelify Sans", var(--texto); color:var(--tela-ink-2); }
+/* Entrar / Criar conta: menu de jogo, com a setinha na opção escolhida */
+.console .tabs { display:flex; flex-wrap:wrap; gap:6px 24px; }
+.console .tabs button { justify-self:auto; display:flex; align-items:center; gap:8px; padding:4px 2px; font:700 21px/1 "Pixelify Sans", var(--texto);
+  letter-spacing:0; text-transform:none; color:var(--tela-ink-2); background:none; border-radius:4px; box-shadow:none; }
+.console .tabs button::before { content:""; border-left:9px solid var(--botao-a); border-block:7px solid transparent; visibility:hidden; }
+.console .tabs button[aria-pressed="true"] { color:var(--tela-ink); }
+.console .tabs button[aria-pressed="true"]::before { visibility:visible; }
+.console .tabs button:focus-visible { outline:2px solid var(--tela-ink); outline-offset:2px; }
+.console .aviso { font:600 14px/1.5 var(--texto); color:var(--tela-ink); }
+.console .field > span:first-child, .console .field > label { font:700 14px var(--texto); letter-spacing:0; text-transform:none; color:var(--tela-ink); }
+.console .field input { padding-block:12px; color:var(--tela-ink); background:#fff; border:2px solid var(--tela-ink); border-radius:6px; }
+.console .field input::placeholder { color:#5d6f84; opacity:1; }
+.console .field input:focus { border-color:var(--tela-ink); box-shadow:0 0 0 3px #3f8ee6; }
+.console .campo > svg { color:var(--tela-ink); }
 #loginPass { padding-right:52px; }
 .ver-senha { position:absolute; right:6px; top:50%; transform:translateY(-50%); display:grid; place-items:center;
-  width:40px; height:40px; padding:0; color:var(--brand); background:none; border-radius:10px; box-shadow:none; }
+  width:40px; height:40px; padding:0; color:var(--tela-ink); background:none; border-radius:6px; box-shadow:none; }
 .ver-senha svg { width:20px; height:20px; }
-.ver-senha[aria-pressed="true"] { background:var(--brand-soft); }
-#loginSubmit { justify-self:stretch; display:flex; align-items:center; justify-content:center; gap:10px; padding:15px;
-  font-size:16px; letter-spacing:.08em; text-transform:uppercase; border-radius:999px; }
-#loginSubmit::before { content:""; width:22px; height:22px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%23fff'/%3E%3Cpath d='M7 12h9M12.5 7.5 17 12l-4.5 4.5' fill='none' stroke='%231f9d55' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat; }
-.login-card .note { text-align:center; font-size:13px; }
-.note a, .aceite a { color:var(--link); }
-.links { display:flex; justify-content:center; gap:16px; }
-.aviso { font-size:14px; color:var(--ink-2); }
-.dica { font-size:12px; color:var(--muted); }
-.ok { font-size:13px; }
-.ok:empty { display:none; }
-.aceite { display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start; text-align:left; font-size:13px;
-  line-height:1.5; color:var(--ink-2); cursor:pointer; }
-.aceite input { width:18px; height:18px; margin:1px 0 0; accent-color:var(--brand); }
+.ver-senha[aria-pressed="true"] { background:#14284b17; }
+.console .dica { font-size:13px; color:var(--tela-ink-2); }
+.console .aceite { font-size:13px; line-height:1.5; color:var(--tela-ink); }
+.console .aceite input { accent-color:var(--botao-a); }
+.console .aceite a, .console .tela .link { color:var(--tela-ink); font-weight:700; text-decoration:underline; text-underline-offset:2px; }
+.console .hint { font:700 14px/1.45 var(--texto); color:#b0234f; }
+.console .ok { font:700 14px/1.45 var(--texto); color:#17703a; }
+.console .links { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:14px; }
+.console .links:not(:has(button:not([hidden]))) { display:none; }
 
-/* ilustração: sobe um pouco por baixo do quadro de login (o fundo da imagem é transparente) */
+/* casco: direcional de enfeite, o botão principal e a grade do alto-falante */
+.controles { display:grid; grid-template-columns:64px minmax(0, 1fr) 44px; align-items:center; gap:20px; padding-inline:4px; }
+.dpad { position:relative; width:64px; height:64px; }
+.dpad::before, .dpad::after { content:""; position:absolute; background:var(--moldura); border-radius:5px; }
+.dpad::before { inset:22px 0; box-shadow:0 4px 0 #0005; }
+.dpad::after { inset:0 22px; }
+#loginSubmit { justify-self:stretch; padding:15px 18px; font:800 17px/1.1 var(--texto); letter-spacing:.01em; text-transform:none;
+  color:#fff; background:var(--botao-a); border-radius:999px; box-shadow:0 5px 0 var(--botao-a-borda), 0 10px 18px #a01f4c4d;
+  transition:transform .08s, box-shadow .08s; }
+#loginSubmit:active:not(:disabled) { transform:translateY(4px); box-shadow:0 1px 0 var(--botao-a-borda), 0 3px 8px #a01f4c4d; }
+#loginSubmit:disabled { opacity:.8; }
+#loginSubmit:focus-visible { outline:3px solid var(--moldura); outline-offset:4px; }
+.grade { width:44px; height:44px; transform:rotate(-25deg);
+  background:radial-gradient(circle, color-mix(in srgb, var(--casco-ink) 65%, transparent) 2.2px, transparent 2.8px) 0 0/11px 11px; }
+.console > .note { margin:0; text-align:center; font-size:13px; }
+.console > .note a { color:var(--casco-ink); font-weight:700; }
+@media (prefers-reduced-motion: reduce) {
+  .tela::after { display:none; }
+  .led, .console:has(#loginSubmit:disabled) .led { animation:none; }
+  #loginSubmit { transition:none; }
+}
+
+/* ilustração: sobe um pouco por baixo do console (o fundo da imagem é transparente) */
 .cena { grid-column:1 / -1; grid-row:2; position:relative; z-index:1; display:block; width:100%; height:auto;
   margin-top:-40px; pointer-events:none; }
 .cena img { display:block; width:100%; height:auto; }
 
-/* benefícios: faixa clara com 4 cartões */
-.beneficios { box-sizing:border-box; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:18px;
+/* benefícios: faixa com 4 colunas */
+.beneficios { box-sizing:border-box; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:32px;
   flex:1 0 auto; align-content:start;
-  padding:28px max(24px, calc((100% - 1132px) / 2)) 40px; background:var(--banda); scroll-margin-top:16px; }
-.beneficios article { display:grid; justify-items:center; align-content:start; gap:10px; padding:22px 16px; text-align:center;
-  background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:0 10px 26px var(--sombra); }
-.beneficios h3 { margin:0; font:800 18px/1.2 var(--titulo); color:var(--ink); }
-.beneficios p { font-size:14px; line-height:1.5; color:var(--ink-2); }
+  padding:44px max(24px, calc((100% - 1132px) / 2)) 48px; background:var(--banda); scroll-margin-top:16px; }
+.beneficios article { display:grid; align-content:start; gap:10px; }
+.beneficios .ic { width:40px; height:40px; border-radius:10px; box-shadow:none; }
+.beneficios h3 { margin:4px 0 0; font:800 19px/1.2 var(--titulo); color:var(--ink); }
+.beneficios p { font-size:15px; line-height:1.5; color:var(--ink-2); }
 /* seções Sobre e Como Funciona (o menu do topo desce até elas) */
 #loginPanel { scroll-behavior:smooth; }
 @media (prefers-reduced-motion: reduce) { #loginPanel { scroll-behavior:auto; } }
 .secao { box-sizing:border-box; width:100%; max-width:1180px; margin-inline:auto; padding:56px 24px; scroll-margin-top:8px; }
 .secao h2 { margin:0; font:800 clamp(30px, 4.4vw, 44px)/1.1 var(--titulo); color:var(--ink); }
-.secao h2 em { font-style:normal; color:var(--brand); }
 .secao h3 { margin:0; font:800 19px/1.2 var(--titulo); color:var(--ink); }
 .secao p { font-size:16px; line-height:1.65; color:var(--ink-2); }
 .sobre { display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(0, 1fr); gap:48px; align-items:center; }
 .sobre-texto { display:grid; gap:16px; }
-.sobre-jogos { display:grid; gap:14px; margin:0; padding:0; list-style:none; }
-.sobre-jogos li { display:flex; align-items:center; gap:16px; padding:18px 20px; background:var(--surface);
-  border:1px solid var(--line); border-radius:18px; box-shadow:0 10px 26px var(--sombra); }
+/* lista dos jogos: uma linha por jogo */
+.sobre-jogos { display:grid; margin:0; padding:0; list-style:none; border-top:1.5px solid var(--line); }
+.sobre-jogos li { display:flex; align-items:center; gap:16px; padding:18px 4px; border-bottom:1.5px solid var(--line); }
 .sobre-jogos .ic { flex:none; }
-.sobre-jogos p { font-size:14px; }
-.sobre-jogos .em-breve { border-style:dashed; box-shadow:none; background:transparent; }
-.como { display:grid; gap:28px; justify-items:center; text-align:center; }
-.passos { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:18px; width:100%; margin:0; padding:0; list-style:none; }
-.passos li { position:relative; display:grid; justify-items:center; align-content:start; gap:12px; padding:34px 20px 24px;
-  background:var(--surface); border:1px solid var(--line); border-radius:20px; box-shadow:0 10px 26px var(--sombra); }
-.passos p { font-size:15px; }
-.passo-num { position:absolute; top:-16px; display:grid; place-items:center; width:34px; height:34px; border-radius:50%;
-  font:800 17px var(--titulo); color:var(--brand-ink); background:var(--brand); box-shadow:0 6px 14px color-mix(in srgb, var(--brand) 35%, transparent); }
-.como-cta { padding:15px 34px; font-size:16px; letter-spacing:.06em; text-transform:uppercase; border-radius:999px; }
+.sobre-jogos p { font-size:15px; }
+.sobre-jogos .em-breve { border-bottom-style:dashed; opacity:.75; }
+/* como funciona: trilha de fases, com as etapas ligadas por um caminho tracejado */
+.como { display:grid; gap:40px; justify-items:center; text-align:center; }
+.passos { position:relative; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:32px; width:100%; margin:0; padding:0; list-style:none; }
+.passos::before { content:""; position:absolute; top:27px; left:16.7%; right:16.7%; border-top:3px dashed var(--field-line); }
+.passos li { position:relative; display:grid; justify-items:center; align-content:start; gap:10px; }
+.passos p { max-width:24em; font-size:15px; }
+.passo-num { display:grid; place-items:center; width:56px; height:56px; border-radius:50%; margin-bottom:6px;
+  font:800 26px/1 var(--titulo); color:var(--brand-ink); background:var(--brand); }
+.como-cta { padding:15px 34px; font-size:17px; letter-spacing:.01em; text-transform:none; border-radius:999px; }
 .beneficios a { color:var(--link); }
 @media (max-width: 960px) {
   .sobre { grid-template-columns:minmax(0, 1fr); gap:28px; }
   .passos { grid-template-columns:minmax(0, 1fr); gap:28px; max-width:460px; }
+  /* na vertical, cada etapa desenha o trecho até a próxima, e a trilha termina no último círculo */
+  .passos::before { content:none; }
+  .passos li:not(:last-child)::after { content:""; position:absolute; top:56px; bottom:-28px; left:27px; border-left:3px dashed var(--field-line); }
+  .passos li { grid-template-columns:56px minmax(0, 1fr); column-gap:18px; row-gap:6px; justify-items:start; text-align:left; }
+  .passo-num { grid-row:span 2; margin:0; }
 }
 @media (max-width: 560px) { .secao { padding:40px 16px; } }
 /* rodapé verde com a borda de cima arredondada */
@@ -228,7 +291,7 @@ html[data-tema="claro"] .tema-btn .ic-sol, html:not([data-tema="claro"]) .tema-b
   .menu { display:none; }
   .topo-acoes { margin-left:auto; }
   .hero { grid-template-columns:minmax(0, 1fr); row-gap:28px; }
-  .login-card { grid-column:1; grid-row:2; justify-self:center; width:100%; max-width:440px; box-sizing:border-box; }
+  .console { grid-column:1; grid-row:2; justify-self:center; width:100%; max-width:440px; box-sizing:border-box; }
   .cena { grid-row:3; margin-top:0; }
   .beneficios { grid-template-columns:repeat(2, minmax(0, 1fr)); }
 }
@@ -240,12 +303,18 @@ html[data-tema="claro"] .tema-btn .ic-sol, html:not([data-tema="claro"]) .tema-b
   .topo-entrar { padding:8px 12px; }
   .hero { padding-inline:16px; padding-top:10px; }
   .hero-sub { font-size:15px; }
-  .destaques li { font-size:12.5px; }
-  .login-card { padding:22px 18px 18px; }
-  .beneficios { gap:12px; padding-inline:16px; }
-  .beneficios article { padding:16px 10px; }
-  .beneficios h3 { font-size:16px; }
-  .beneficios p { font-size:13px; }
+  .destaques li { font-size:15px; }
+  .console { padding:14px 14px 16px; border-radius:22px 22px 52px 22px; }
+  .moldura { padding:10px; border-radius:12px 12px 30px 12px; }
+  .tela { padding:14px 12px 12px; }
+  .controles { grid-template-columns:48px minmax(0, 1fr) 32px; gap:14px; }
+  .dpad { width:48px; height:48px; }
+  .dpad::before { inset:16px 0; }
+  .dpad::after { inset:0 16px; }
+  .grade { width:32px; height:32px; background-size:8px 8px; }
+  .beneficios { gap:24px 16px; padding-inline:16px; }
+  .beneficios h3 { font-size:17px; }
+  .beneficios p { font-size:14px; }
   .brilho { width:20px; height:20px; }
 }
 

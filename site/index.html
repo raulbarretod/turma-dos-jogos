@@ -65,7 +65,7 @@
 <!-- conecta antes aos servidores de fontes: o título aparece mais rápido já na fonte certa -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Chakra+Petch:wght@500;700&family=IBM+Plex+Mono:wght@400;600&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Chakra+Petch:wght@500;700&family=IBM+Plex+Mono:wght@400;600&family=Nunito:wght@400;600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
 <link rel="stylesheet" href="plataforma/plataforma.css">
 
 <div class="panel" id="loginPanel" hidden>
@@ -78,7 +78,7 @@
       <nav class="menu" aria-label="Seções">
         <a href="#inicio" aria-current="page">Início</a>
         <a href="#sobre">Sobre</a>
-        <a href="#como-funciona">Como Funciona</a>
+        <a href="#como-funciona">Como funciona</a>
         <a href="#beneficios">Benefícios</a>
       </nav>
       <div class="topo-acoes">
@@ -90,26 +90,28 @@
 
     <section class="hero">
       <div class="hero-texto">
-        <span class="selo"><svg><use href="#icEstrela"/></svg>Aprender brincando é o nosso jogo!</span>
-        <h1>Mais que jogos, <em>conhecimento</em> para a vida!</h1>
+        <h1>Mais que jogos, conhecimento para a vida!</h1>
         <p class="hero-sub">A <b>Turma dos Jogos</b> é um espaço seguro e divertido onde as crianças aprendem,
           desenvolvem habilidades e se preparam para o futuro.</p>
         <ul class="destaques">
-          <li><span class="ic roxo"><svg><use href="#icIdeia"/></svg></span>Aprendizado com propósito</li>
-          <li><span class="ic ouro"><svg><use href="#icEstrela"/></svg></span>Desenvolve habilidades</li>
-          <li><span class="ic verde"><svg><use href="#icEscudo"/></svg></span>Ambiente seguro e confiável</li>
+          <li>Aprendizado com propósito</li>
+          <li>Desenvolve habilidades</li>
+          <li>Ambiente seguro e confiável</li>
         </ul>
       </div>
 
-      <form class="login-card" id="loginForm" autocomplete="on" novalidate>
-        <div class="login-marca">
-          <svg width="56" height="56" role="img" aria-label="Logo Turma dos Jogos"><use href="#brandMark"/></svg>
-          <span>Turma<em>dos Jogos</em></span>
+      <!-- login do responsável desenhado como um console portátil: os campos ficam na "tela" e o botão principal no casco -->
+      <form class="console" id="loginForm" autocomplete="on" novalidate aria-labelledby="telaTitulo">
+        <div class="console-topo">
+          <svg width="34" height="34" aria-hidden="true"><use href="#brandMark"/></svg>
+          <span>Turma dos Jogos</span>
+          <span class="led" aria-hidden="true"></span>
         </div>
-        <span class="eyebrow">Área do Responsável</span>
+        <div class="moldura"><div class="tela">
+        <p class="tela-titulo" id="telaTitulo">Área do responsável</p>
         <div class="tabs" id="loginTabs">
           <button type="button" id="tabLogin" aria-pressed="true">Entrar</button>
-          <button type="button" id="tabSignup" aria-pressed="false">Criar Conta</button>
+          <button type="button" id="tabSignup" aria-pressed="false">Criar conta</button>
         </div>
         <p class="aviso" id="loginAviso" hidden></p>
         <label class="field" id="fEmail"><span>E-mail do responsável</span>
@@ -130,12 +132,17 @@
             <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label>
         <p class="hint" id="loginError" aria-live="polite"></p>
         <p class="ok" id="loginOk" aria-live="polite"></p>
-        <button type="submit" class="principal" id="loginSubmit">Entrar</button>
         <p class="note links">
           <button type="button" class="link" id="linkEsqueci">Esqueci minha senha</button>
           <button type="button" class="link" id="linkReenviar" hidden>Reenviar código</button>
           <button type="button" class="link" id="linkVoltar" hidden>Voltar</button>
         </p>
+        </div></div>
+        <div class="controles">
+          <span class="dpad" aria-hidden="true"></span>
+          <button type="submit" class="principal" id="loginSubmit">Entrar</button>
+          <span class="grade" aria-hidden="true"></span>
+        </div>
         <p class="note"><a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></p>
       </form>
 
@@ -158,8 +165,7 @@
 
     <section class="secao sobre" id="sobre" aria-labelledby="sobreTitulo">
       <div class="sobre-texto">
-        <span class="selo"><svg><use href="#icEstrela"/></svg>Sobre nós</span>
-        <h2 id="sobreTitulo">Sobre a <em>Turma dos Jogos</em></h2>
+        <h2 id="sobreTitulo">Sobre a Turma dos Jogos</h2>
         <p>A Turma dos Jogos é um espaço de jogos educativos para crianças aprenderem brincando. Cada jogo treina
           um conteúdo da escola de um jeito divertido.</p>
         <p>Aqui não há anúncios, e a criança joga num perfil criado pelo responsável, só com um apelido. O progresso fica
@@ -176,14 +182,14 @@
     </section>
 
     <section class="secao como" id="como-funciona" aria-labelledby="comoTitulo">
-      <h2 id="comoTitulo">Como <em>funciona</em></h2>
+      <h2 id="comoTitulo">Como funciona</h2>
       <ol class="passos">
-        <li><span class="passo-num">1</span><span class="ic verde"><svg><use href="#icUsuario"/></svg></span>
+        <li><span class="passo-num">1</span>
           <h3>Crie a conta do responsável</h3><p>Use seu e-mail e uma senha. É rápido e gratuito.</p></li>
-        <li><span class="passo-num">2</span><span class="ic ouro"><svg><use href="#icEstrela"/></svg></span>
+        <li><span class="passo-num">2</span>
           <h3>Crie o perfil da criança</h3><p>Escolha um apelido, uma cor e o desenho (menino ou menina).
             Cada conta pode ter até 6 perfis.</p></li>
-        <li><span class="passo-num">3</span><span class="ic roxo"><svg><use href="#icControle"/></svg></span>
+        <li><span class="passo-num">3</span>
           <h3>Hora de jogar!</h3><p>A criança escolhe o jogo, e cada recorde, medalha e nível conquistado fica salvo
             no perfil dela.</p></li>
       </ol>
