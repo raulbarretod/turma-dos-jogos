@@ -80,11 +80,13 @@
   }
 
   const MENSAGENS = {
-    UsernameExistsException:'Já existe uma conta com esse e-mail. Use "Entrar".',
+    UsernameExistsException:'O e-mail informado já existe nas nossas bases de dados. Use "Entrar" ou "Esqueci minha senha".',
     NotAuthorizedException:'E-mail ou senha incorretos.',
     UserNotFoundException:'E-mail ou senha incorretos.',
     CodeMismatchException:'Código incorreto. Confira o e-mail e tente de novo.',
     ExpiredCodeException:'Esse código expirou. Clique em "Reenviar código".',
+    // na tela de confirmar, "incorreto" e "expirado" recebem a mesma resposta
+    CodigoInvalidoNoCadastro:'Código incorreto ou vencido. Clique em "Reenviar código" e use o código do e-mail mais recente.',
     InvalidPasswordException:'A senha precisa ter pelo menos 8 caracteres, com pelo menos um número.',
     LimitExceededException:'Muitas tentativas. Espere alguns minutos e tente de novo.',
     TooManyRequestsException:'Muitas tentativas. Espere alguns minutos e tente de novo.',
@@ -103,8 +105,7 @@
     entrar:    { abas:true, email:true, senha:'Senha', esqueci:true, botao:'Entrar' },
     criar:     { abas:true, email:true, senha:'Crie uma senha', dica:true, aceite:true, botao:'Criar conta' },
     confirmar: { codigo:true, reenviar:true, voltar:true, botao:'Confirmar',
-      aviso:e => `Enviamos um código de 6 números para ${e}. Se não chegar, confira a caixa de spam. ` +
-        'Se você já tem conta com esse e-mail, volte e use Entrar ou Esqueci minha senha.' },
+      aviso:e => `Enviamos um código de 6 números para ${e}. Se não chegar em alguns minutos, confira a caixa de spam.` },
     esqueci:   { email:true, voltar:true, botao:'Enviar código',
       aviso:() => 'Digite o e-mail da conta. Vamos enviar um código para você criar uma nova senha.' },
     novaSenha: { codigo:true, senha:'Nova senha', dica:true, voltar:true, botao:'Salvar nova senha',
@@ -150,7 +151,8 @@
   $('linkVoltar').onclick = () => setEtapa('entrar');
   $('linkReenviar').onclick = async () => {
     // resposta igual para qualquer e-mail (não revela se já existe conta), exceto falta de internet ou excesso de tentativas
-    const ok = () => { $('loginError').textContent = ''; $('loginOk').textContent = 'Se houver um cadastro esperando confirmação, reenviamos o código.'; };
+    const ok = () => { $('loginError').textContent = ''; $('loginOk').textContent = 'Reenviamos o código. ' +
+      'Se o e-mail não chegar em alguns minutos, confira a caixa de spam.'; };
     try { await Conta.reenviar(pendente.email); ok(); }
     catch (e) { ['SemInternet', 'LimitExceededException', 'TooManyRequestsException'].includes(e.codigo) ? $('loginError').textContent = mensagem(e) : ok(); }
   };
@@ -165,12 +167,14 @@
     if (c.dica && (senha.length < 8 || !/\d/.test(senha))) return err(MENSAGENS.InvalidPasswordException);
     if (c.aceite && !$('loginConsent').checked) return err('Para criar a conta, marque que você é o responsável e concorda com a Política de Privacidade.');
     const botao = $('loginSubmit'), texto = botao.textContent;
+    if (botao.disabled) return;   // Enter repetido não manda o mesmo pedido várias vezes
     botao.disabled = true; botao.textContent = 'Aguarde…';
     try {
       if (etapa === 'entrar') { await Conta.entrar(email, senha); return entrou(); }
       if (etapa === 'criar') {
-        // e-mail já cadastrado segue para a mesma tela de código: o site não revela quem tem conta
-        await Conta.criar(email, senha, POLITICA).catch(x => { if (x.codigo !== 'UsernameExistsException') throw x; });
+        // e-mail já cadastrado: o Cognito responde UsernameExistsException e o site avisa (não manda para a tela de código).
+        // Cadastro que nunca foi confirmado: em "Entrar" o Cognito responde UserNotConfirmed e o site reenvia o código (abaixo).
+        await Conta.criar(email, senha, POLITICA);
         pendente = { email, senha }; return setEtapa('confirmar');
       }
       if (etapa === 'confirmar') {
@@ -188,8 +192,8 @@
         await Conta.reenviar(email).catch(() => {});
         return setEtapa('confirmar');
       }
-      // confirmar o código de um e-mail que já tinha conta: mesma mensagem de código errado
-      if (etapa === 'confirmar' && x.codigo === 'NotAuthorizedException') return err(MENSAGENS.CodeMismatchException);
+      if (etapa === 'confirmar' && ['NotAuthorizedException', 'ExpiredCodeException', 'CodeMismatchException'].includes(x.codigo))
+        return err(MENSAGENS.CodigoInvalidoNoCadastro);
       err(mensagem(x));
     } finally { botao.disabled = false; if (botao.textContent === 'Aguarde…') botao.textContent = texto; }
   };
