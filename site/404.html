@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Página não encontrada · Turma dos Jogos</title>
+<!-- página de erro: o Amplify mostra esta página (com código 404) em qualquer endereço que não existe.
+     Todos os caminhos começam com "/": a página funciona em qualquer endereço, como /admin/ ou /a/b/c -->
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b1624">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='2' y='2' width='60' height='60' rx='17' fill='%234fd16e'/%3E%3Crect x='16.5' y='21' width='10' height='24' rx='3' fill='%230b1624'/%3E%3Crect x='9.5' y='28' width='24' height='10' rx='3' fill='%230b1624'/%3E%3Ccircle cx='43' cy='27' r='5.5' fill='%23ff4f8b'/%3E%3Ccircle cx='51' cy='37.5' r='5.5' fill='%23ffb238'/%3E%3C/svg%3E">
+<script src="/plataforma/tema.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="/plataforma/plataforma.css">
+<style>
+  .erro { box-sizing:border-box; max-width:640px; margin:0 auto; padding:24px 24px 72px; display:grid; justify-items:center; gap:18px; text-align:center; }
+  .erro-arte { width:min(300px, 76vw); height:auto; }
+  .erro-arte .num { font:800 112px/1 var(--titulo); fill:var(--ink); }
+  .erro-arte .num.meio { fill:var(--brand); }
+  .erro h1 { margin:0; font-size:clamp(32px, 7vw, 46px); line-height:1.05; color:var(--ink); }
+  .erro h1 em { font-style:normal; color:var(--brand); }
+  .erro p { margin:0; max-width:460px; font-size:16px; line-height:1.6; color:var(--ink-2); }
+  .erro .acoes { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:6px; }
+  .erro .botao { display:inline-flex; align-items:center; padding:13px 22px; border-radius:12px; font:800 16px var(--texto);
+    color:var(--brand-ink); background:var(--brand); text-decoration:none; }
+  .erro .botao.alt { color:var(--ink); background:transparent; border:1.5px solid var(--line); }
+  .erro .botao:hover { filter:brightness(1.06); }
+  .erro .botao.alt:hover { background:var(--surface-2); filter:none; }
+  .erro .botao:focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
+  .erro .endereco { font-size:13px; color:var(--muted); word-break:break-all; }
+  @media (prefers-reduced-motion: no-preference) {
+    .erro-arte .controle { animation:balanca 2.4s ease-in-out infinite; transform-origin:150px 74px; }
+    @keyframes balanca { 50% { transform:rotate(-8deg) translateY(-4px); } }
+  }
+</style>
+</head>
+<body class="platform pagina">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5fe08a"/><stop offset="1" stop-color="#2a9d8f"/>
+    </linearGradient>
+  </defs>
+  <symbol id="brandMark" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="17" fill="url(#brandGrad)"/>
+    <rect x="2" y="34" width="60" height="28" rx="0" fill="#000" opacity=".08"/>
+    <rect x="16.5" y="21" width="10" height="24" rx="3" fill="#0b1624"/>
+    <rect x="9.5" y="28" width="24" height="10" rx="3" fill="#0b1624"/>
+    <circle cx="43" cy="27" r="5.5" fill="#ff4f8b"/>
+    <circle cx="51" cy="37.5" r="5.5" fill="#ffb238"/>
+    <path d="M40.6 24.6l4.8 4.8M45.4 24.6l-4.8 4.8" stroke="#0b1624" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M48 37.5h6M51 34.8v0M51 40.2v0" stroke="#0b1624" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="icSol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="icLua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+    <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+</svg>
+<header class="topo">
+  <a class="marca" href="/" aria-label="Turma dos Jogos, início">
+    <svg width="52" height="52" aria-hidden="true"><use href="#brandMark"/></svg>
+    <span>Turma<em>dos Jogos</em></span></a>
+  <div class="topo-acoes">
+    <button type="button" class="tema-btn" data-tema-btn aria-label="Mudar tema">
+      <svg class="ic-sol"><use href="#icSol"/></svg><svg class="ic-lua"><use href="#icLua"/></svg></button>
+    <a class="topo-entrar" href="/">Início</a>
+  </div>
+</header>
+
+<main class="erro">
+  <!-- "4", o controle da Turma no lugar do zero, "4" -->
+  <svg class="erro-arte" viewBox="0 0 300 140" role="img" aria-label="Erro 404">
+    <text class="num" x="58" y="118" text-anchor="middle">4</text>
+    <g class="controle"><use href="#brandMark" x="104" y="28" width="92" height="92"/></g>
+    <text class="num" x="242" y="118" text-anchor="middle">4</text>
+  </svg>
+  <h1>Ops! Essa fase <em>não existe</em></h1>
+  <p>O endereço que você abriu não leva a nenhuma página da Turma dos Jogos. Ele pode ter sido digitado errado ou não existir mais.</p>
+  <p class="endereco" id="endereco" hidden></p>
+  <div class="acoes">
+    <a class="botao" href="/">Voltar para o início</a>
+    <a class="botao alt" href="/duvidas.html">Dúvidas</a>
+    <a class="botao alt" href="/contato.html">Contato</a>
+  </div>
+</main>
+<script>
+  // mostra o endereço que não existe (como texto, nunca como HTML)
+  (() => { const e = document.getElementById('endereco'); e.textContent = 'Endereço: ' + location.pathname; e.hidden = false; })();
+</script>
+</body>
+</html>

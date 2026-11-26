@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel do administrador · Turma dos Jogos</title>
+<!-- Painel local: só abre pelo servidor deste computador (node servir.mjs ou admin.cmd). Nunca é publicado no Amplify. -->
+<meta name="robots" content="noindex">
+<meta name="chave-do-painel" content="__CHAVE_DO_PAINEL__">
+<script src="/plataforma/tema.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="/plataforma/plataforma.css">
+<style>
+  .adm { box-sizing:border-box; max-width:1080px; margin:0 auto; padding:8px 24px 72px; display:grid; gap:22px; }
+  .adm h1 { margin:0; font-size:clamp(30px, 5vw, 42px); line-height:1.05; color:var(--ink); }
+  .adm h1 em { font-style:normal; color:var(--brand); }
+  .adm h2 { margin:0 0 12px; font:800 21px var(--titulo); color:var(--ink); }
+  .adm p { margin:0; font-size:15px; line-height:1.6; color:var(--ink-2); }
+  .adm a { color:var(--link); }
+  .caixa { padding:18px 20px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+  .linha { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+  .selo { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font:800 12px var(--texto);
+    background:var(--surface-2); color:var(--ink-2); white-space:nowrap; }
+  .selo.ok { background:var(--brand-soft); color:var(--link); }
+  .selo.aviso { background:#ff4f8b22; color:var(--pink); }
+  .adm .botao { justify-self:auto; display:inline-flex; align-items:center; padding:9px 14px; border-radius:10px; border:0; cursor:pointer;
+    font:800 14px var(--texto); letter-spacing:0; text-transform:none; color:var(--brand-ink); background:var(--brand); box-shadow:none; text-decoration:none; }
+  .adm .botao.alt { color:var(--ink); background:transparent; border:1.5px solid var(--line); }
+  .adm .botao.perigo { color:var(--pink); background:transparent; border:1.5px solid #ff4f8b66; }
+  .adm .botao:disabled { opacity:.4; cursor:default; }
+  .tabela { width:100%; border-collapse:collapse; font-size:14px; }
+  .tabela th { text-align:left; padding:8px 10px; font:800 12px var(--texto); letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+    border-bottom:1px solid var(--line); }
+  .tabela td { padding:12px 10px; border-bottom:1px solid var(--line); color:var(--ink); vertical-align:middle; }
+  .tabela td small { display:block; color:var(--muted); font-size:12px; }
+  .acoes { display:flex; flex-wrap:wrap; gap:6px; }
+  .perfis-lista { margin-top:10px; display:grid; gap:8px; }
+  .perfil-linha { padding:10px 12px; border-radius:10px; background:var(--surface-2); font-size:13px; color:var(--ink-2); }
+  .perfil-linha b { color:var(--ink); }
+  .perfil-linha code { font-size:12px; word-break:break-all; }
+  .msg { min-height:22px; font:700 14px var(--texto); }
+  .msg.erro { color:var(--pink); } .msg.ok { color:var(--link); }
+  @media (max-width: 760px) {
+    .tabela thead { display:none; }
+    .tabela tr { display:grid; padding:10px 0; border-bottom:1px solid var(--line); }
+    .tabela td { border:0; padding:4px 0; }
+  }
+</style>
+</head>
+<body class="platform pagina">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fe08a"/><stop offset="1" stop-color="#2a9d8f"/></linearGradient></defs>
+  <symbol id="brandMark" viewBox="0 0 64 64">
+    <rect x="2" y="2" width="60" height="60" rx="17" fill="url(#brandGrad)"/>
+    <rect x="16.5" y="21" width="10" height="24" rx="3" fill="#0b1624"/><rect x="9.5" y="28" width="24" height="10" rx="3" fill="#0b1624"/>
+    <circle cx="43" cy="27" r="5.5" fill="#ff4f8b"/><circle cx="51" cy="37.5" r="5.5" fill="#ffb238"/>
+  </symbol>
+  <symbol id="icSol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="icLua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+    <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+</svg>
+<header class="topo">
+  <a class="marca" href="/admin" aria-label="Painel do administrador">
+    <svg width="52" height="52" aria-hidden="true"><use href="#brandMark"/></svg>
+    <span>Turma<em>dos Jogos</em></span></a>
+  <div class="topo-acoes">
+    <button type="button" class="tema-btn" data-tema-btn aria-label="Mudar tema">
+      <svg class="ic-sol"><use href="#icSol"/></svg><svg class="ic-lua"><use href="#icLua"/></svg></button>
+    <a class="topo-entrar" href="https://turmadosjogos.com.br/" target="_blank" rel="noopener">Abrir o site</a>
+  </div>
+</header>
+
+<main class="adm">
+  <div>
+    <h1>Painel do <em>administrador</em></h1>
+    <p>Só funciona neste computador. Use para dar licença de teste a uma conta e depois entrar no site com ela.</p>
+  </div>
+
+  <section class="caixa" aria-labelledby="tAws">
+    <h2 id="tAws">Acesso à AWS</h2>
+    <div class="linha"><span id="awsSelo" class="selo">Verificando…</span><span id="awsQuem"></span></div>
+    <div class="linha" id="awsLogin" hidden style="margin-top:12px">
+      <p>O login da AWS deste computador expirou.</p>
+      <button class="botao" id="btnLogin">Entrar na AWS</button>
+      <button class="botao alt" id="btnRecarregar">Já entrei, recarregar</button>
+    </div>
+  </section>
+
+  <section class="caixa" aria-labelledby="tContas">
+    <div class="linha" style="justify-content:space-between"><h2 id="tContas" style="margin:0">Contas</h2>
+      <button class="botao alt" id="btnAtualizar">Atualizar</button></div>
+    <p class="msg" id="msg" role="status"></p>
+    <table class="tabela">
+      <thead><tr><th>E-mail</th><th>Situação</th><th>Perfis</th><th>Licença</th><th>Ações</th></tr></thead>
+      <tbody id="contas"><tr><td colspan="5">Carregando…</td></tr></tbody>
+    </table>
+  </section>
+
+  <section class="caixa" aria-labelledby="tTestar">
+    <h2 id="tTestar">Testar no site</h2>
+    <p>1. Dê a licença de teste à sua conta (botão <b>Dar licença</b> acima). 2. Entre no site com essa conta: com a licença,
+      o progresso fica salvo e os recursos pagos são liberados. 3. No fim dos testes, use <b>Tirar licença</b> se quiser voltar ao normal.</p>
+    <div class="linha" style="margin-top:12px">
+      <a class="botao" href="https://turmadosjogos.com.br/" target="_blank" rel="noopener">Entrar no site publicado</a>
+      <a class="botao alt" href="/" target="_blank" rel="noopener">Abrir o site local</a>
+    </div>
+    <p style="margin-top:10px;font-size:13px;color:var(--muted)">O site local mostra as mudanças antes de publicar, mas a API de produção não aceita o login a partir dele.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const CHAVE = document.querySelector('meta[name="chave-do-painel"]').content;
+  const $ = id => document.getElementById(id);
+  // texto vindo da AWS entra sempre como texto, nunca como HTML
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
+  const data = s => s ? new Date(s).toLocaleDateString('pt-BR') : '—';
+  async function chamar(metodo, rota, corpo) {
+    const r = await fetch('/admin/api/' + rota, { method:metodo, headers:{ 'X-Chave-Painel':CHAVE, ...(corpo && { 'Content-Type':'application/json' }) },
+      body:corpo && JSON.stringify(corpo) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(d.erro || 'erro ' + r.status), { login:d.login });
+    return d;
+  }
+  const msg = (t, tipo = '') => { $('msg').textContent = t; $('msg').className = 'msg ' + tipo; };
+  const SITUACAO = { CONFIRMED:['Confirmada', 'ok'], UNCONFIRMED:['Não confirmada', 'aviso'], FORCE_CHANGE_PASSWORD:['Trocar senha', 'aviso'] };
+
+  let contas = [];
+  async function carregar() {
+    $('contas').innerHTML = '<tr><td colspan="5">Carregando…</td></tr>';
+    try {
+      const d = await chamar('GET', 'contas');
+      $('awsSelo').textContent = 'Conectado'; $('awsSelo').className = 'selo ok'; $('awsLogin').hidden = true;
+      $('awsQuem').textContent = `${d.quem.split('/').pop()} · perfil ${d.perfil}`;
+      contas = d.contas; desenhar();
+    } catch (e) {
+      $('awsSelo').textContent = e.login ? 'Login expirado' : 'Erro'; $('awsSelo').className = 'selo aviso';
+      $('awsQuem').textContent = e.login ? '' : e.message; $('awsLogin').hidden = !e.login;
+      $('contas').innerHTML = '<tr><td colspan="5">Sem acesso à AWS.</td></tr>';
+    }
+  }
+  function desenhar() {
+    $('contas').innerHTML = contas.map((c, i) => {
+      const [sit, cls] = SITUACAO[c.status] ?? [c.status, ''];
+      const l = c.licenca;
+      const lic = !l ? '<span class="selo">Sem licença</span>'
+        : `<span class="selo ${l.ativa ? 'ok' : 'aviso'}">${l.ativa ? 'Ativa' : 'Vencida'} até ${esc(data(l.validaAte))}</span><small>${esc(l.plano)}</small>`;
+      return `<tr>
+        <td><b>${esc(c.email)}</b><small>Criada em ${esc(data(c.criado))}</small></td>
+        <td><span class="selo ${cls}">${esc(sit)}</span></td>
+        <td>${c.perfis}</td>
+        <td>${lic}</td>
+        <td><div class="acoes">
+          <button class="botao" data-acao="dar" data-i="${i}">${l?.ativa ? 'Renovar 30 dias' : 'Dar licença 30 dias'}</button>
+          ${l ? `<button class="botao perigo" data-acao="tirar" data-i="${i}">Tirar licença</button>` : ''}
+          <button class="botao alt" data-acao="perfis" data-i="${i}" aria-expanded="false">Ver perfis</button>
+        </div><div class="perfis-lista" id="perfis-${i}" hidden></div></td></tr>`;
+    }).join('') || '<tr><td colspan="5">Nenhuma conta.</td></tr>';
+  }
+  $('contas').addEventListener('click', async e => {
+    const b = e.target.closest('[data-acao]'); if (!b) return;
+    const c = contas[+b.dataset.i];
+    b.disabled = true;
+    try {
+      if (b.dataset.acao === 'dar') {
+        const r = await chamar('POST', 'licenca', { username:c.username, dias:30 });
+        msg(`Licença de teste de ${c.email} válida até ${data(r.validaAte)}.`, 'ok'); await carregar();
+      } else if (b.dataset.acao === 'tirar') {
+        if (!confirm(`Tirar a licença de ${c.email}? O progresso salvo continua no banco, mas some do site até ter licença de novo.`)) return;
+        await chamar('DELETE', 'licenca', { username:c.username });
+        msg(`Licença de ${c.email} removida.`, 'ok'); await carregar();
+      } else {
+        const caixa = $('perfis-' + b.dataset.i), abrir = caixa.hidden;
+        b.setAttribute('aria-expanded', abrir); caixa.hidden = !abrir;
+        if (!abrir) return;
+        caixa.innerHTML = 'Carregando…';
+        const { perfis } = await chamar('GET', 'perfis?username=' + encodeURIComponent(c.username));
+        caixa.innerHTML = perfis.map(p => `<div class="perfil-linha"><b>${esc(p.nome)}</b> · criado em ${esc(data(p.criado))}
+          <br><code>${esc(JSON.stringify(p.dados ?? {}))}</code></div>`).join('') || '<div class="perfil-linha">Nenhum perfil.</div>';
+      }
+    } catch (x) { msg(x.message, 'erro'); if (x.login) carregar(); }
+    finally { b.disabled = false; }
+  });
+  $('btnAtualizar').onclick = () => { msg(''); carregar(); };
+  $('btnLogin').onclick = async () => { await chamar('POST', 'login').catch(() => {}); msg('O login da AWS abriu no navegador. Depois de entrar, clique em "Já entrei, recarregar".'); };
+  $('btnRecarregar').onclick = () => { msg(''); carregar(); };
+  carregar();
+})();
+</script>
+</body>
+</html>
