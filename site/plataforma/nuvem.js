@@ -63,12 +63,43 @@
   const Conta = {
     get logado() { return !!tokens; },
     get email() { return tokens ? lerToken(tokens.id).email : ''; },
+    // devolve { mfa } quando a conta tem verificação em duas etapas: aí falta o código do app (confirmarMfa)
     async entrar(email, senha) {
       const r = await cognito('InitiateAuth', { AuthFlow:'USER_PASSWORD_AUTH', ClientId:cfg.clientId,
         AuthParameters:{ USERNAME:email, PASSWORD:senha } });
+      if (r.ChallengeName === 'SOFTWARE_TOKEN_MFA')
+        return { mfa:{ sessao:r.Session, usuario:r.ChallengeParameters?.USER_ID_FOR_SRP || email } };
       const a = r.AuthenticationResult;
       if (!a) throw new ErroNuvem('Desafio');
       guardar({ id:a.IdToken, acesso:a.AccessToken, renovar:a.RefreshToken });
+      return {};
+    },
+    // segunda etapa do login: código de 6 números do app autenticador (a sessão do Cognito vale 3 minutos)
+    async confirmarMfa(mfa, codigo) {
+      const r = await cognito('RespondToAuthChallenge', { ClientId:cfg.clientId, ChallengeName:'SOFTWARE_TOKEN_MFA',
+        Session:mfa.sessao, ChallengeResponses:{ USERNAME:mfa.usuario, SOFTWARE_TOKEN_MFA_CODE:codigo } });
+      const a = r.AuthenticationResult;
+      if (!a) throw new ErroNuvem('Desafio');
+      guardar({ id:a.IdToken, acesso:a.AccessToken, renovar:a.RefreshToken });
+    },
+    // verificação em duas etapas (opcional) com app autenticador
+    async mfaAtivo() {
+      const u = await cognito('GetUser', { AccessToken:(await tokenValido()).acesso });
+      return (u.UserMFASettingList ?? []).includes('SOFTWARE_TOKEN_MFA');
+    },
+    // gera o segredo que o app autenticador guarda (vira QR code no site; não fica salvo no aparelho)
+    async mfaIniciar() {
+      return (await cognito('AssociateSoftwareToken', { AccessToken:(await tokenValido()).acesso })).SecretCode;
+    },
+    async mfaAtivar(codigo) {
+      const acesso = (await tokenValido()).acesso;
+      const r = await cognito('VerifySoftwareToken', { AccessToken:acesso, UserCode:codigo, FriendlyDeviceName:'Turma dos Jogos' });
+      if (r.Status !== 'SUCCESS') throw new ErroNuvem('CodeMismatchException');
+      await cognito('SetUserMFAPreference', { AccessToken:acesso, SoftwareTokenMfaSettings:{ Enabled:true, PreferredMfa:true } });
+    },
+    async mfaDesativar() {
+      await cognito('SetUserMFAPreference', { AccessToken:(await tokenValido()).acesso,
+        SoftwareTokenMfaSettings:{ Enabled:false, PreferredMfa:false } });
     },
     // o e-mail da conta vem do próprio usuário do login (o site não pode gravar nem trocar e-mail);
     // o aceite da política vai para a função da AWS, que grava data e versão no banco (o usuário não consegue alterar)

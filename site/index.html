@@ -155,7 +155,7 @@
           <span class="campo"><svg><use href="#icEmail"/></svg>
             <input id="loginEmail" name="email" type="email" autocomplete="username" inputmode="email" maxlength="120"
               autocapitalize="none" spellcheck="false" placeholder="seuemail@exemplo.com"></span></label>
-        <label class="field" id="fCodigo" hidden><span>Código recebido por e-mail</span>
+        <label class="field" id="fCodigo" hidden><span id="codigoRotulo">Código recebido por e-mail</span>
           <span class="campo"><svg><use href="#icEmail"/></svg>
             <input id="loginCode" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 números"></span></label>
         <div class="field" id="fSenha"><label for="loginPass" id="senhaRotulo">Senha</label>
@@ -273,7 +273,25 @@
         <button type="button" class="alt" id="perfilApagar">Apagar perfil</button>
       </div>
     </form>
+    <form class="perfil-form mfa-form" id="mfaForm" novalidate hidden>
+      <h3>Verificação em duas etapas</h3>
+      <p class="note" id="mfaStatus"></p>
+      <div id="mfaCadastro" hidden>
+        <p class="note">1. Abra um app autenticador (Google Authenticator, Microsoft Authenticator…) e leia o QR code:</p>
+        <div class="mfa-qr" id="mfaQr"></div>
+        <p class="note">Sem câmera? <a id="mfaLink" href="#">Abrir no app</a> ou digite a chave no app:</p>
+        <code class="mfa-chave" id="mfaChave"></code>
+        <label class="field"><span>2. Digite o código de 6 números que aparece no app</span>
+          <input id="mfaCodigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 números"></label>
+      </div>
+      <p class="hint" id="mfaErro" role="alert"></p>
+      <div class="actions">
+        <button type="submit" id="mfaAcao">Ativar</button>
+        <button type="button" class="alt" id="mfaFechar">Fechar</button>
+      </div>
+    </form>
     <p class="note conta">Conta: <span id="contaEmail"></span>
+      <button class="link" id="contaMfa">Verificação em duas etapas</button>
       <button class="link" id="perfisEditar">Editar perfis</button>
       <button class="link perigo" id="contaExcluir" hidden>Excluir conta</button></p>
   </div>

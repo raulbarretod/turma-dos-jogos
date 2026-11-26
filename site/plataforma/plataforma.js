@@ -86,6 +86,8 @@
     CodeMismatchException:'Código incorreto. Confira o e-mail e tente de novo.',
     ExpiredCodeException:'Esse código expirou. Clique em "Reenviar código".',
     // na tela de confirmar, "incorreto" e "expirado" recebem a mesma resposta
+    CodigoMfa:'Código incorreto. Confira o código que aparece agora no app autenticador e tente de novo.',
+    MfaExpirou:'O tempo para digitar o código acabou. Entre de novo com e-mail e senha.',
     CodigoInvalidoNoCadastro:'Código incorreto ou vencido. Clique em "Reenviar código" e use o código do e-mail mais recente.',
     InvalidPasswordException:'A senha precisa ter pelo menos 8 caracteres, com uma letra maiúscula, um número e um caractere especial (ex.: ! @ # $ %).',
     LimitExceededException:'Muitas tentativas. Espere alguns minutos e tente de novo.',
@@ -110,6 +112,8 @@
       aviso:() => 'Digite o e-mail da conta. Vamos enviar um código para você criar uma nova senha.' },
     novaSenha: { codigo:true, senha:'Nova senha', dica:true, voltar:true, botao:'Salvar nova senha',
       aviso:e => `Enviamos um código para ${e}. Digite o código e a nova senha.` },
+    mfa:       { codigo:true, rotuloCodigo:'Código do app autenticador', voltar:true, botao:'Verificar',
+      aviso:() => 'Sua conta tem verificação em duas etapas. Digite o código de 6 números que aparece no seu app autenticador.' },
   };
   let etapa = 'entrar', pendente = {};   // pendente: e-mail (e senha) entre uma etapa e outra
   function setEtapa(nome, ok = '') {
@@ -119,6 +123,7 @@
     $('tabLogin').setAttribute('aria-pressed', nome === 'entrar'); $('tabSignup').setAttribute('aria-pressed', nome === 'criar');
     $('loginAviso').hidden = !c.aviso; $('loginAviso').textContent = c.aviso?.(pendente.email) ?? '';
     $('fEmail').hidden = !c.email; $('fCodigo').hidden = !c.codigo; $('fSenha').hidden = !c.senha;
+    $('codigoRotulo').textContent = c.rotuloCodigo || 'Código recebido por e-mail';
     $('senhaRotulo').textContent = c.senha || ''; $('senhaDica').hidden = !c.dica;
     $('loginPass').autocomplete = nome === 'entrar' ? 'current-password' : 'new-password';
     $('fAceite').hidden = !c.aceite;
@@ -171,8 +176,15 @@
     const botao = $('loginSubmit'), texto = botao.textContent;
     if (botao.disabled) return;   // Enter repetido não manda o mesmo pedido várias vezes
     botao.disabled = true; botao.textContent = 'Aguarde…';
+    // entra; se a conta tiver verificação em duas etapas, vai para a etapa do código do app
+    const login = async (em, se) => {
+      const r = await Conta.entrar(em, se);
+      if (r.mfa) { pendente = { email:em, mfa:r.mfa }; return setEtapa('mfa'); }
+      return entrou();
+    };
     try {
-      if (etapa === 'entrar') { await Conta.entrar(email, senha); return entrou(); }
+      if (etapa === 'entrar') return await login(email, senha);
+      if (etapa === 'mfa') { await Conta.confirmarMfa(pendente.mfa, codigo); return entrou(); }
       if (etapa === 'criar') {
         // e-mail já cadastrado: o Cognito responde UsernameExistsException e o site avisa (não manda para a tela de código).
         // Cadastro que nunca foi confirmado: em "Entrar" o Cognito responde UserNotConfirmed e o site reenvia o código (abaixo).
@@ -181,18 +193,25 @@
       }
       if (etapa === 'confirmar') {
         await Conta.confirmar(pendente.email, codigo);
-        await Conta.entrar(pendente.email, pendente.senha); return entrou();
+        return await login(pendente.email, pendente.senha);
       }
       if (etapa === 'esqueci') { await Conta.esqueci(email); pendente = { email }; return setEtapa('novaSenha'); }
       if (etapa === 'novaSenha') {
         await Conta.novaSenha(pendente.email, codigo, senha);
-        await Conta.entrar(pendente.email, senha); return entrou();
+        return await login(pendente.email, senha);
       }
     } catch (x) {
       if (x.codigo === 'UserNotConfirmedException') {   // criou a conta mas não confirmou o e-mail
         pendente = { email, senha };
         await Conta.reenviar(email).catch(() => {});
         return setEtapa('confirmar');
+      }
+      if (etapa === 'mfa') {
+        if (x.codigo === 'CodeMismatchException') return err(MENSAGENS.CodigoMfa);
+        // sessão de 3 minutos vencida (ou tentativas demais): volta para e-mail e senha
+        if (x.codigo === 'NotAuthorizedException' || x.codigo === 'ExpiredCodeException') {
+          setEtapa('entrar'); return err(MENSAGENS.MfaExpirou);
+        }
       }
       if (etapa === 'confirmar' && ['NotAuthorizedException', 'ExpiredCodeException', 'CodeMismatchException'].includes(x.codigo))
         return err(MENSAGENS.CodigoInvalidoNoCadastro);
@@ -242,7 +261,7 @@
     perfil = null; editando = false;
     showPlatform('perfisPanel');
     $('contaEmail').textContent = Conta.email;
-    $('perfisErro').textContent = ''; $('perfilForm').hidden = true;
+    $('perfisErro').textContent = ''; $('perfilForm').hidden = true; $('mfaForm').hidden = true;
     $('perfisEditar').hidden = true; $('contaExcluir').hidden = true;
     $('perfisLista').innerHTML = '<p class="note">Carregando perfis…</p>';
     try { perfis = await Perfis.listar(); }
@@ -282,8 +301,65 @@
     const p = perfis.find(x => x.id === b.dataset.perfil);
     editando ? abrirFormPerfil(p) : escolher(p);
   };
-  $('perfisEditar').onclick = () => { editando = !editando; $('perfilForm').hidden = true; desenharPerfis(); };
+  $('perfisEditar').onclick = () => { editando = !editando; $('perfilForm').hidden = true; $('mfaForm').hidden = true; desenharPerfis(); };
   $('perfisSair').onclick = () => sair();
+
+  // --- verificação em duas etapas (opcional): app autenticador ---
+  // estados: 'ativo' (pode desativar) · 'cadastro' (QR code na tela, falta o código) · 'inativo' (pode começar)
+  let mfaEstado = 'inativo';
+  function mfaTela(estado, erro = '') {
+    mfaEstado = estado;
+    $('mfaStatus').textContent = {
+      ativo:'Ativada. Ao entrar, além da senha, o site pede o código do seu app autenticador.',
+      inativo:'Desativada. Ative para proteger a conta: além da senha, o login vai pedir um código do seu celular.',
+      cadastro:'' }[estado];
+    $('mfaCadastro').hidden = estado !== 'cadastro';
+    $('mfaAcao').textContent = { ativo:'Desativar', inativo:'Ativar', cadastro:'Confirmar e ativar' }[estado];
+    $('mfaAcao').classList.toggle('alt', estado === 'ativo');
+    $('mfaErro').textContent = erro;
+    if (estado === 'cadastro') $('mfaCodigo').focus();
+  }
+  $('contaMfa').onclick = async () => {
+    $('perfilForm').hidden = true; $('mfaForm').hidden = false;
+    $('mfaStatus').textContent = 'Carregando…'; $('mfaCadastro').hidden = true; $('mfaErro').textContent = '';
+    $('mfaForm').scrollIntoView({ behavior:'smooth', block:'center' });
+    try { mfaTela(await Conta.mfaAtivo() ? 'ativo' : 'inativo'); }
+    catch (x) { if (x.codigo === 'NaoLogado') return sair('Entre de novo para continuar.'); mfaTela('inativo', mensagem(x)); }
+  };
+  $('mfaFechar').onclick = () => { $('mfaForm').hidden = true; $('mfaCodigo').value = ''; $('mfaQr').innerHTML = ''; };
+  $('mfaForm').onsubmit = async e => {
+    e.preventDefault();
+    const botao = $('mfaAcao');
+    if (botao.disabled) return;
+    if (mfaEstado === 'cadastro' && !/^\d{6}$/.test($('mfaCodigo').value.trim())) return mfaTela('cadastro', 'O código tem 6 números.');
+    if (mfaEstado === 'ativo' && !confirm('Desativar a verificação em duas etapas? A conta volta a entrar só com e-mail e senha.')) return;
+    botao.disabled = true;
+    try {
+      if (mfaEstado === 'inativo') {
+        const chave = await Conta.mfaIniciar();
+        await loadFile('script', { src:'plataforma/qrcode.min.js' });   // só carrega quem for ativar
+        const uri = `otpauth://totp/${encodeURIComponent('Turma dos Jogos:' + Conta.email)}` +
+          `?secret=${chave}&issuer=${encodeURIComponent('Turma dos Jogos')}`;
+        const qr = qrcode(0, 'M'); qr.addData(uri); qr.make();
+        $('mfaQr').innerHTML = qr.createSvgTag({ cellSize:4, margin:2, scalable:true, alt:'QR code para o app autenticador' });
+        $('mfaLink').href = uri;
+        $('mfaChave').textContent = chave.match(/.{1,4}/g).join(' ');
+        $('mfaCodigo').value = '';
+        return mfaTela('cadastro');
+      }
+      if (mfaEstado === 'cadastro') {
+        await Conta.mfaAtivar($('mfaCodigo').value.trim());
+        $('mfaQr').innerHTML = ''; $('mfaChave').textContent = ''; $('mfaCodigo').value = '';
+        return mfaTela('ativo');
+      }
+      await Conta.mfaDesativar();
+      mfaTela('inativo');
+    } catch (x) {
+      if (x.codigo === 'NaoLogado') return sair('Entre de novo para continuar.');
+      const codigoErrado = ['CodeMismatchException', 'EnableSoftwareTokenMFAException'].includes(x.codigo);
+      mfaTela(mfaEstado, codigoErrado ? MENSAGENS.CodigoMfa : mensagem(x));
+    } finally { botao.disabled = false; }
+  };
   $('contaExcluir').onclick = async () => {
     if (!confirm('Excluir a conta apaga para sempre o login e o progresso de todas as crianças. Deseja continuar?')) return;
     try {

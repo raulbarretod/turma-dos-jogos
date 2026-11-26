@@ -47,6 +47,10 @@ Resources:
       UserPoolTier: LITE
       DeletionProtection: ACTIVE
       UsernameAttributes: [email]
+      # verificacao em duas etapas opcional, com app autenticador (Google/Microsoft Authenticator etc.);
+      # o responsavel ativa na area da conta do site
+      MfaConfiguration: OPTIONAL
+      EnabledMfas: [SOFTWARE_TOKEN_MFA]
       UsernameConfiguration: { CaseSensitive: false }
       AutoVerifiedAttributes: [email]
       # trocar o e-mail so vale depois de confirmar o codigo enviado ao novo endereco;

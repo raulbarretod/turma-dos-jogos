@@ -129,7 +129,7 @@ O site (Amplify) e o DNS da zona ficam fora do stack. Já os registros de e-mail
 |---|---|---|
 | **AWS Amplify Hosting** | app `turma-dos-jogos`, branch `producao` | Hospeda o site estático (pasta `site/`) com HTTPS e domínio próprio (`turmadosjogos.com.br` e `www`). |
 | **Amazon Route 53** | zona `turmadosjogos.com.br` | Aponta o domínio para o Amplify e publica os registros que autenticam os e-mails: SPF, 3 DKIM e DMARC (`p=quarantine`). O domínio é registrado fora da AWS. |
-| **Amazon Cognito** | user pool `turma-dos-jogos-responsaveis` | Cadastro e login dos responsáveis por e-mail e senha, verificação do e-mail e recuperação de senha. Emite o token JWT usado na API. O gatilho **PreSignUp** chama a Lambda para validar o cadastro e registrar o aceite da Política de Privacidade. |
+| **Amazon Cognito** | user pool `turma-dos-jogos-responsaveis` | Cadastro e login dos responsáveis por e-mail e senha, verificação em duas etapas opcional (app autenticador), verificação do e-mail e recuperação de senha. Emite o token JWT usado na API. O gatilho **PreSignUp** chama a Lambda para validar o cadastro e registrar o aceite da Política de Privacidade. |
 | **Amazon API Gateway** (HTTP API) | `turma-dos-jogos` | Porta de entrada do back-end. Valida o token do Cognito (autorizador JWT), aplica CORS só para os endereços do site e limita a taxa (20 req/s, pico de 50). |
 | **AWS Lambda** | `turma-dos-jogos-api` (Node.js 22, 256 MB) | Regras de negócio: perfis, partidas, dados dos jogos, conta, conteúdo dos jogos e formulário de contato. O código fica dentro do template (`ZipFile`). |
 | **Amazon DynamoDB** | tabela `turma-dos-jogos-perfis` | Guarda perfis e progresso. Usa partição `dono` (id do responsável no Cognito) e ordenação `id`, assim cada responsável só enxerga os próprios dados. Cobra por requisição, tem backup contínuo (PITR) e proteção contra exclusão. |
@@ -202,6 +202,7 @@ turma-dos-jogos/
 │   │   ├── plataforma.js        # login, perfis, lista de jogos, carregamento e progresso
 │   │   ├── contato.js           # formulário de contato + desafio anti-robô
 │   │   ├── tema.js              # tema claro/escuro
+│   │   ├── qrcode.min.js        # gera o QR code do MFA no navegador (qrcode-generator 1.4.4, MIT)
 │   │   └── plataforma.css
 │   └── jogos/
 │       ├── cobra-tabuada/       # cartao.js (cartão na lista) + jogo.js + jogo.css
@@ -312,6 +313,7 @@ O progresso salvo com `storage.save` vai para a nuvem em lotes, 1,5 s depois de 
 - **Dados mínimos da criança:** só apelido, cor e progresso, sem nome real, foto ou e-mail.
 - **Isolamento por responsável:** a partição do DynamoDB é o `sub` do usuário no Cognito, lido do token já validado pelo API Gateway (`requestContext.authorizer.jwt.claims.sub`) e não de algo que o navegador envia.
 - **Senhas só no Cognito:** o site manda a senha por HTTPS direto para o Cognito, que a guarda com hash. Nem a Lambda, nem o DynamoDB, nem o navegador guardam senha. No navegador ficam só os tokens do login (`localStorage`, chave `turma:tokens`): o de acesso vale 15 minutos e o de renovação, 30 dias.
+- **Verificação em duas etapas (MFA) opcional** com app autenticador (Google Authenticator, Microsoft Authenticator…). O responsável ativa em *Quem vai jogar? → Verificação em duas etapas* lendo um QR code. A partir daí, o login pede também o código de 6 números do app. O QR code é gerado no próprio navegador ([`qrcode-generator`](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4, MIT, servido pelo site), então o segredo não passa por nenhum outro serviço.
 - **Política de senha:** no mínimo 8 caracteres, com letra maiúscula, número e caractere especial. A regra é aplicada pelo Cognito e repetida no site para avisar antes do envio.
 - **Content-Security-Policy restritiva** e HSTS com preload no site; só o próprio site, o cdnjs (three.js), o Cognito e a API podem ser acessados.
 - **Licença e aceite gravados no servidor:** ficam em linhas que o usuário não consegue alterar pela API.

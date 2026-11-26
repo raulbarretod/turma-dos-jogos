@@ -357,6 +357,14 @@ html[data-tema="claro"] .tema-btn .ic-sol, html:not([data-tema="claro"]) .tema-b
 .conta { overflow-wrap:anywhere; }
 .conta .link { margin-left:10px; }
 .conta .perigo { color:var(--pink); }
+/* verificação em duas etapas: QR code sempre em fundo branco, para a câmera ler nos dois temas */
+.mfa-form #mfaCadastro { display:grid; gap:10px; }
+.mfa-form #mfaCadastro[hidden] { display:none; }
+.mfa-qr { justify-self:center; width:180px; padding:8px; background:#fff; border-radius:12px; line-height:0; }
+.mfa-qr svg { width:100%; height:auto; }
+.mfa-chave { display:block; padding:8px 10px; font:600 14px/1.5 ui-monospace, Consolas, monospace; letter-spacing:.5px;
+  word-break:break-all; color:var(--ink); background:var(--surface-2); border-radius:10px; user-select:all; }
+.mfa-form a { color:var(--link); }
 
 /* lista de jogos */
 #hubPanel .card { margin:auto; width:100%; max-width:780px; text-align:left; }
