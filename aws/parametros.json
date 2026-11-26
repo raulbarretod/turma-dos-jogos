@@ -1,7 +1,7 @@
 [
     {
         "ParameterKey": "EnderecosDoSite",
-        "ParameterValue": "https://turmadosjogos.com.br,https://www.turmadosjogos.com.br,https://producao.d2ufc1mue7vu9v.amplifyapp.com,http://localhost:8000"
+        "ParameterValue": "https://turmadosjogos.com.br,https://www.turmadosjogos.com.br,https://producao.d2ufc1mue7vu9v.amplifyapp.com"
     },
     {
         "ParameterKey": "ExigirProvaNoContato",

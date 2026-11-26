@@ -7,7 +7,7 @@ Parameters:
   EnderecosDoSite:
     Type: CommaDelimitedList
     Description: Enderecos do site que podem usar a API, separados por virgula.
-    Default: https://turmadosjogos.com.br,https://www.turmadosjogos.com.br,https://producao.d2ufc1mue7vu9v.amplifyapp.com,http://localhost:8000
+    Default: https://turmadosjogos.com.br,https://www.turmadosjogos.com.br,https://producao.d2ufc1mue7vu9v.amplifyapp.com
   Dominio:
     Type: String
     Description: Dominio do site; os e-mails do formulario de contato saem de contato@ este dominio.

@@ -1,4 +1,4 @@
-// Servidor local para testar o site em http://localhost:8000 (endereço já liberado na API).
+// Servidor local para testar o site em http://localhost:8000 (para chamar a API daqui, inclua http://localhost:8000 no parâmetro EnderecosDoSite do stack).
 // Uso: node servir.mjs
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
