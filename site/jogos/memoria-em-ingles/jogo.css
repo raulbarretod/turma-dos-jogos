@@ -1,0 +1,88 @@
+/* Memória em Inglês — estilos do jogo (os comuns vêm de plataforma/plataforma.css).
+   Tudo fica dentro de #game-memoria para não misturar com outros jogos. */
+#game-memoria { position:fixed; inset:0;
+  background:radial-gradient(circle at 20% 10%, #2a1f5c 0, transparent 50%), radial-gradient(circle at 85% 90%, #173a2c 0, transparent 45%), #0b1624; }
+.mem-hud { position:fixed; top:calc(env(safe-area-inset-top,0px) + 16px); left:16px; right:16px;
+  display:grid; grid-template-columns:1fr auto 1fr; pointer-events:none; font-variant-numeric:tabular-nums; }
+.mem-hud > div:nth-child(2) { text-align:center; }
+.mem-hud b { display:block; font:700 30px/1 "Chakra Petch", sans-serif; color:var(--amber); }
+.mem-hud span { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#c9d6e5; }
+.mem-hud .r { text-align:right; } .mem-hud .r b { color:var(--ink); }
+.mem-hud i { font-style:normal; }
+@media (max-width: 480px) { .mem-hud .mem-lv { display:none; } }   /* celular: só "Recorde", sem o nome do nível */
+
+/* mesa: as cartas cabem na tela sem rolar (largura e altura limitam o tamanho) */
+.mem-board { --gap:clamp(6px, 1.4vmin, 14px);
+  position:fixed; left:50%; top:calc(env(safe-area-inset-top,0px) + 76px); transform:translateX(-50%);
+  display:grid; grid-template-columns:repeat(var(--cols, 4), minmax(0, 1fr)); gap:var(--gap);
+  width:min(calc(100vw - 24px), 820px,
+    calc((100dvh - 150px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - (var(--rows, 3) - 1) * var(--gap))
+      / var(--rows, 3) * .78 * var(--cols, 4) + (var(--cols, 4) - 1) * var(--gap))); }
+.mem-card { position:relative; justify-self:stretch; width:100%; height:auto; min-height:0; aspect-ratio:3 / 4;
+  padding:0; margin:0; border:0; border-radius:12px; background:none; box-shadow:none;
+  font:inherit; letter-spacing:0; text-transform:none; perspective:800px; cursor:pointer; container-type:inline-size;
+  -webkit-tap-highlight-color:transparent; }
+.mem-card:focus-visible { outline:3px solid var(--amber); outline-offset:3px; border-radius:12px; }
+.mem-inner { position:absolute; inset:0; transform-style:preserve-3d; transition:transform .38s cubic-bezier(.3,1.3,.5,1); }
+.mem-card.up .mem-inner { transform:rotateY(180deg); }
+.mem-face { position:absolute; inset:0; display:grid; place-items:center; border-radius:12px; backface-visibility:hidden;
+  -webkit-backface-visibility:hidden; overflow:hidden; }
+.mem-back { color:#f4f6fa; font:700 40cqw/1 "Chakra Petch", sans-serif;
+  background:repeating-linear-gradient(45deg, #ffffff10 0 6px, transparent 6px 12px), #7c5ce6;
+  border:2px solid #a891ff; box-shadow:0 6px 16px #0007, inset 0 0 0 4px #7c5ce6, inset 0 0 0 6px #ffffff40; }
+.mem-card:not(.up):hover .mem-back { filter:brightness(1.12); }
+.mem-front { transform:rotateY(180deg); background:#f4f6fa; border:2px solid var(--amber); box-shadow:0 6px 16px #0007; }
+.mem-front.fig { font-size:56cqw; line-height:1; }
+.mem-front.word { padding:4cqw; font:700 clamp(10px, 17cqw, 34px)/1.05 "Chakra Petch", sans-serif; color:#14284b; word-break:break-word; text-align:center; }
+/* par encontrado: borda verde e um pulo */
+.mem-card.done .mem-front { border-color:var(--green); background:#e4f8ea; box-shadow:0 0 0 3px #4fd16e55, 0 6px 16px #0007; }
+.mem-card.done { animation:memPar .45s ease-out; }
+@keyframes memPar { 40% { transform:scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .mem-inner { transition:none; } .mem-card.done { animation:none; } }
+
+/* tradução do par encontrado */
+.mem-tip { position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 20px); transform:translateX(-50%);
+  margin:0; padding:8px 18px; border-radius:999px; background:#0b1624cc; border:1px solid #2f4d70;
+  color:var(--ink) !important; font:700 16px "Chakra Petch", sans-serif !important; white-space:nowrap; pointer-events:none; }
+.mem-sound { position:fixed; right:16px; bottom:calc(env(safe-area-inset-bottom,0px) + 16px); z-index:6;
+  width:44px; height:44px; padding:0; display:grid; place-items:center; border-radius:50%;
+  background:#132338cc; border:1px solid #2f4d70; box-shadow:0 6px 20px #0006; color:var(--ink); }
+.mem-sound[aria-pressed="false"] { color:var(--muted); }
+.mem-toast { position:fixed; left:16px; right:16px; top:calc(env(safe-area-inset-top,0px) + 72px); margin-inline:auto;
+  max-width:420px; padding:12px 16px; text-align:center; font:700 15px "Chakra Petch", sans-serif; color:#1a1204;
+  background:var(--amber); border-radius:8px; box-shadow:0 10px 40px #0008; z-index:8; pointer-events:none; }
+
+/* tela inicial / fim de partida */
+#mHome { place-items:initial; overflow-y:auto; padding-block:72px 24px; background:#0b1624e6; z-index:5; }
+#mHome .card { margin:auto; width:100%; max-width:460px; }
+.mem-intro { display:grid; gap:14px; }
+.mem-art { justify-self:center; width:min(240px,64vw); height:auto; }
+.mem-who { font-size:12px; }
+.mem-who b { color:var(--ink); font-weight:600; }
+.mem-stars { margin:0; font-size:40px; line-height:1; letter-spacing:.08em; color:var(--amber); }
+#mHomeBtn { grid-column:1 / -1; }
+.mem-rules { text-align:left; background:#0f1d2fe6; border:1px solid #24405f; border-radius:10px; padding:4px 20px 10px; }
+.mem-rules h2 { margin:14px 0 4px; font:700 13px "Chakra Petch", sans-serif; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+.mem-rule { display:grid; grid-template-columns:88px 1fr; gap:12px; padding:12px 0; border-top:1px solid #1f3552; align-items:baseline; }
+.mem-rule b { font:700 12px "Chakra Petch", sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--amber); }
+.mem-rule span { font-size:13px; line-height:1.6; color:#c9d6e5; }
+@media (max-width: 420px) { .mem-rule { grid-template-columns:1fr; gap:4px; } }
+@media (min-width: 860px) {
+  #mHome .card:has(.mem-rules:not([hidden])) { max-width:960px; grid-template-columns:1fr 1.2fr; gap:56px; align-items:center; }
+  #mHome .card:has(.mem-rules:not([hidden])) .mem-intro { text-align:left; }
+  #mHome .card:has(.mem-rules:not([hidden])) .mem-intro > * { justify-self:start; }
+  #mHome .card:has(.mem-rules:not([hidden])) h1 { font-size:72px; }
+}
+
+/* escolha de nível */
+.mem-levels { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:min(100%, 420px); justify-self:center; }
+button.mem-level { justify-self:stretch; display:grid; gap:3px; align-content:start; text-align:left; padding:10px;
+  font:inherit; letter-spacing:0; text-transform:none; color:var(--ink); background:#132338;
+  border:1px solid #2a4566; border-radius:8px; box-shadow:none; }
+button.mem-level b { font:700 16px "Chakra Petch", sans-serif; }
+button.mem-level small { font-size:10px; line-height:1.4; color:var(--muted); }
+button.mem-level em { font-style:normal; font-size:11px; color:var(--amber); display:flex; align-items:center; gap:4px; }
+button.mem-level[aria-checked="true"] { border-color:var(--amber); background:#2a2410; box-shadow:0 0 0 1px var(--amber); }
+button.mem-level.locked { border-style:dashed; background:#0f1a2a; cursor:help; }
+button.mem-level.locked b, button.mem-level.locked em { color:var(--muted); }
+@media (max-width: 380px) { .mem-levels { grid-template-columns:1fr; } }

@@ -52,7 +52,7 @@ body.platform {
   --bg:#0b1624; --ink:#e8eef6; --ink-2:#c9d6e5; --muted:#8a9db4; --pink:#ff4f8b; --gold:#ffb238;
   --brand:#4fd16e; --brand-ink:#0b1624; --brand-soft:#173a2c; --link:#6fe08a;
   --surface:#0f1d2fe6; --surface-2:#132338; --surface-3:#24405f; --line:#24405f;
-  --field:#0f1d2f; --field-line:#2a4566; --banda:#0f1d2f99; --faixa:#1a7f45;
+  --field:#0f1d2f; --field-line:#2a4566; --faixa:#1a7f45;
   --selo-bg:#173a2c; --selo-ink:#7fe39a; --sombra:#0008;
   --fundo:radial-gradient(circle at 15% 10%, #17314f 0, transparent 45%), radial-gradient(circle at 90% 95%, #173a2c 0, transparent 40%);
   color-scheme:dark; color:var(--ink); font-family:var(--texto); background:var(--fundo), var(--bg);
@@ -61,7 +61,7 @@ html[data-tema="claro"] body.platform {
   --bg:#f3f9fd; --ink:#14284b; --ink-2:#33475f; --muted:#5d6f84; --pink:#d6336c; --gold:#b36b00;
   --brand:#1f9d55; --brand-ink:#fff; --brand-soft:#e3f5ea; --link:#1a8a4a;
   --surface:#fff; --surface-2:#eef5f9; --surface-3:#dff3e6; --line:#dce7ef;
-  --field:#fff; --field-line:#cfdde8; --banda:#ffffffb3; --faixa:#1f9d55;
+  --field:#fff; --field-line:#cfdde8; --faixa:#1f9d55;
   --selo-bg:#e3f5ea; --selo-ink:#1f7a45; --sombra:#1b3a5a24;
   /* céu com nuvens */
   --fundo:radial-gradient(ellipse 150px 40px at 40% 9%, #fff 60%, transparent 62%),
@@ -234,7 +234,7 @@ html[data-tema="claro"] .tema-btn .ic-sol, html:not([data-tema="claro"]) .tema-b
 /* benefícios: faixa com 4 colunas */
 .beneficios { box-sizing:border-box; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:32px;
   flex:1 0 auto; align-content:start;
-  padding:44px max(24px, calc((100% - 1132px) / 2)) 48px; background:var(--banda); scroll-margin-top:16px; }
+  padding:44px max(24px, calc((100% - 1132px) / 2)) 48px; scroll-margin-top:16px; }
 .beneficios article { display:grid; align-content:start; gap:10px; }
 .beneficios .ic { width:40px; height:40px; border-radius:10px; box-shadow:none; }
 .beneficios h3 { margin:4px 0 0; font:800 19px/1.2 var(--titulo); color:var(--ink); }
