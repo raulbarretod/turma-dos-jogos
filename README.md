@@ -33,6 +33,7 @@
 - [Como publicar](#como-publicar)
 - [Como adicionar um jogo novo](#como-adicionar-um-jogo-novo)
 - [Segurança e privacidade](#segurança-e-privacidade)
+- [SEO e leitura por IAs](#seo-e-leitura-por-ias)
 - [Custos](#custos)
 - [Links](#links)
 
@@ -195,6 +196,7 @@ turma-dos-jogos/
 │   ├── contato.html  duvidas.html  privacidade.html  termos.html
 │   ├── manifest.webmanifest     # instalação como app (PWA)
 │   ├── robots.txt  sitemap.xml  # SEO
+│   ├── llms.txt                 # resumo do site para IAs (páginas, jogos, como funciona)
 │   ├── icones/  imagens/        # ícones do app e ilustrações (PNG + WebP)
 │   ├── plataforma/
 │   │   ├── config.js            # região, Client ID e URL da API (saídas do stack)
@@ -324,6 +326,19 @@ O progresso salvo com `storage.save` vai para a nuvem em lotes, 1,5 s depois de 
 - **Aceite da Política de Privacidade** registrado no cadastro (gatilho PreSignUp).
 - **E-mail autenticado** com SPF, DKIM e DMARC.
 - Scripts de terceiros (three.js) carregados com **SRI** (`integrity`).
+
+---
+
+## SEO e leitura por IAs
+
+O site foi preparado para buscadores e para bots de IA (GPTBot, ClaudeBot, PerplexityBot), que em geral **não rodam JavaScript**:
+
+- **Conteúdo no HTML:** a página inicial (apresentação, jogos, como funciona, benefícios) vem visível no próprio HTML, sem depender do JavaScript para aparecer. Quem já está logado não vê essa tela piscar: o `tema.js`, carregado no `<head>`, põe a classe `ja-logado` no `<html>`, e a plataforma tira essa classe quando abre outra tela.
+- **HTML semântico:** `<header>`, `<nav>`, `<main>` (com `display: contents`, para não mudar o layout), `<section>`, `<article>` e `<footer>`.
+- **[`llms.txt`](site/llms.txt)** em [turmadosjogos.com.br/llms.txt](https://turmadosjogos.com.br/llms.txt): resumo do site em Markdown, com as páginas, os jogos e como funciona.
+- **Dados estruturados** (`schema.org` `WebSite` + `Organization`), `canonical`, Open Graph para a prévia do link, `sitemap.xml` e `robots.txt`.
+
+> **Pendente:** o `Organization.sameAs` ainda está vazio porque a marca não tem perfis oficiais em redes sociais. Quando tiver, inclua os endereços no JSON-LD do `index.html`.
 
 ---
 
