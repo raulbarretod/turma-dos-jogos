@@ -76,6 +76,7 @@
   function showPlatform(panelId) {
     current?.leave?.(); current = null;
     document.body.classList.add('platform');
+    document.documentElement.classList.remove('ja-logado');
     for (const id of ['loginPanel', 'perfisPanel', 'hubPanel', 'gameRoot']) $(id).hidden = id !== panelId;
   }
 

@@ -54,7 +54,7 @@
 <!-- ícone da aba: o mesmo logo da plataforma -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235fe08a'/%3E%3Cstop offset='1' stop-color='%232a9d8f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='2' y='2' width='60' height='60' rx='17' fill='url(%23g)'/%3E%3Crect x='16.5' y='21' width='10' height='24' rx='3' fill='%230b1624'/%3E%3Crect x='9.5' y='28' width='24' height='10' rx='3' fill='%230b1624'/%3E%3Ccircle cx='43' cy='27' r='5.5' fill='%23ff4f8b'/%3E%3Ccircle cx='51' cy='37.5' r='5.5' fill='%23ffb238'/%3E%3C/svg%3E">
 </head>
-<body>
+<body class="platform">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <!-- logo da plataforma: controle de videogame cujo direcional é o sinal de "+" -->
   <defs>
@@ -105,8 +105,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Chakra+Petch:wght@500;700&family=IBM+Plex+Mono:wght@400;600&family=Nunito:wght@400;600;700;800&family=Pixelify+Sans:wght@500;700&display=swap">
 <link rel="stylesheet" href="plataforma/plataforma.css">
 
-<div class="panel" id="loginPanel" hidden>
-  <!-- página de entrada: apresentação da plataforma e, ao lado, o login do responsável -->
+<div class="panel" id="loginPanel">
+  <!-- página de entrada: apresentação da plataforma e, ao lado, o login do responsável.
+       Fica visível já no HTML (sem "hidden") para buscadores e IAs que não rodam JavaScript lerem o conteúdo;
+       quem já está logado não vê esta tela piscar (classe "ja-logado", posta pelo tema.js no <head>). -->
   <div class="entrada" id="inicio">
     <header class="topo">
       <a class="marca" href="#inicio" aria-label="Turma dos Jogos, início">
@@ -125,6 +127,8 @@
       </div>
     </header>
 
+    <!-- conteúdo principal (sem o menu e o rodapé): ajuda buscadores e IAs a separar o que importa -->
+    <main class="conteudo-principal">
     <section class="hero">
       <div class="hero-texto">
         <h1>Mais que jogos, conhecimento para a vida!</h1>
@@ -234,6 +238,7 @@
       </ol>
       <button type="button" class="como-cta" id="comoCriar">Criar conta grátis</button>
     </section>
+    </main>
 
     <footer class="faixa">
       <p class="chamada"><span class="brilho" aria-hidden="true"></span><span class="frase">Juntos, construímos um futuro melhor através do aprendizado!</span><span class="brilho" aria-hidden="true"></span></p>

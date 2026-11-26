@@ -97,6 +97,8 @@ html[data-tema="claro"] .tema-btn .ic-sol, html:not([data-tema="claro"]) .tema-b
 
 /* ----- página de entrada ----- */
 #loginPanel { display:block; padding:0; overflow-x:hidden; overflow-y:auto; }
+#loginPanel[hidden], html.ja-logado #loginPanel { display:none; }   /* logado: não mostra a entrada antes de abrir os perfis */
+.conteudo-principal { display:contents; }   /* <main> só marca o conteúdo; não muda o layout */
 .entrada { min-height:100%; display:flex; flex-direction:column; }
 .topo, .hero { box-sizing:border-box; width:100%; max-width:1180px; margin-inline:auto; padding-inline:24px; }
 .topo { display:flex; align-items:center; gap:24px; padding-block:18px; }

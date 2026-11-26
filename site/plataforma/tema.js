@@ -5,6 +5,8 @@
   const CHAVE = 'turma:tema', raiz = document.documentElement;
   let salvo = null;
   try { salvo = localStorage.getItem(CHAVE); } catch {}
+  // quem já entrou vai direto para os perfis: esconde a página de entrada desde o início (a plataforma tira a classe)
+  try { if (localStorage.getItem('turma:tokens')) raiz.classList.add('ja-logado'); } catch {}
   raiz.dataset.tema = salvo === 'claro' || salvo === 'escuro' ? salvo
     : matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'escuro';
 

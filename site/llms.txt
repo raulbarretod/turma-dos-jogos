@@ -1,0 +1,29 @@
+# Turma dos Jogos
+
+> Site brasileiro de jogos educativos para crianças (tabuada e inglês), sem anúncios. O responsável cria uma conta com e-mail e senha, cadastra até 6 perfis de crianças só com apelido, e cada criança joga no próprio perfil.
+
+A Turma dos Jogos funciona no navegador, no computador e no celular, e pode ser instalada como app. Cada jogo treina um conteúdo da escola de um jeito divertido. Os dados da criança são mínimos (apelido, cor, desenho e progresso nos jogos), sem nome completo, foto ou e-mail.
+
+## Páginas
+
+- [Página inicial](https://turmadosjogos.com.br/): apresentação, lista de jogos, como funciona e área de login do responsável.
+- [Dúvidas frequentes](https://turmadosjogos.com.br/duvidas.html): se é gratuito, para qual idade, conta, quantas crianças por conta, progresso, anúncios, dados guardados, senha e como apagar a conta.
+- [Contato](https://turmadosjogos.com.br/contato.html): formulário para falar com a equipe.
+- [Termos de Uso](https://turmadosjogos.com.br/termos.html): regras de uso da plataforma.
+- [Política de Privacidade](https://turmadosjogos.com.br/privacidade.html): quais dados são coletados, para quê e como pedir a exclusão.
+
+## Jogos
+
+- Cobra Tabuada: a criança guia uma cobrinha até os orbes e responde contas da tabuada do 1 ao 10; quanto mais pontos, menos tempo para responder.
+- Gol de Inglês: a criança bate pênaltis e traduz palavras em inglês, em 3 níveis (cores; animais e frutas; escola e casa).
+- Memória em Inglês: jogo da memória que junta cada palavra em inglês com a sua figura e fala a palavra em voz alta, em 3 níveis.
+
+## Como funciona
+
+1. O responsável (maior de 18 anos) cria a conta com e-mail e senha e confirma o e-mail.
+2. Cria o perfil da criança com apelido, cor e desenho.
+3. A criança escolhe o jogo; recordes, medalhas e níveis ficam salvos no perfil.
+
+## Opcional
+
+- [Código-fonte no GitHub](https://github.com/raulbarretod/turma-dos-jogos): site estático e back-end serverless na AWS.
