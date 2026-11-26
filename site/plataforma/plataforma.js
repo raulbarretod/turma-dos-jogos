@@ -87,7 +87,7 @@
     ExpiredCodeException:'Esse código expirou. Clique em "Reenviar código".',
     // na tela de confirmar, "incorreto" e "expirado" recebem a mesma resposta
     CodigoInvalidoNoCadastro:'Código incorreto ou vencido. Clique em "Reenviar código" e use o código do e-mail mais recente.',
-    InvalidPasswordException:'A senha precisa ter pelo menos 8 caracteres, com pelo menos um número.',
+    InvalidPasswordException:'A senha precisa ter pelo menos 8 caracteres, com uma letra maiúscula, um número e um caractere especial (ex.: ! @ # $ %).',
     LimitExceededException:'Muitas tentativas. Espere alguns minutos e tente de novo.',
     TooManyRequestsException:'Muitas tentativas. Espere alguns minutos e tente de novo.',
     TooManyFailedAttemptsException:'Muitas tentativas. Espere alguns minutos e tente de novo.',
@@ -164,7 +164,9 @@
     if (c.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err('Digite um e-mail válido.');
     if (c.codigo && !/^\d{6}$/.test(codigo)) return err('O código tem 6 números.');
     if (c.senha && !senha) return err('Digite a senha.');
-    if (c.dica && (senha.length < 8 || !/\d/.test(senha))) return err(MENSAGENS.InvalidPasswordException);
+    // mesma regra do Cognito: 8+ caracteres, maiúscula, número e um dos caracteres especiais aceitos por ele
+    if (c.dica && (senha.length < 8 || !/[A-Z]/.test(senha) || !/\d/.test(senha) ||
+        !/[\^$*.\[\]{}()?"!@#%&\/\\,><':;|_~`=+\- ]/.test(senha))) return err(MENSAGENS.InvalidPasswordException);
     if (c.aceite && !$('loginConsent').checked) return err('Para criar a conta, marque que você é o responsável e concorda com a Política de Privacidade.');
     const botao = $('loginSubmit'), texto = botao.textContent;
     if (botao.disabled) return;   // Enter repetido não manda o mesmo pedido várias vezes

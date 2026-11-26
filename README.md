@@ -51,7 +51,7 @@ A **Turma dos Jogos** é um espaço de jogos educativos para crianças aprendere
 
 ### Como funciona para o usuário
 
-1. **Crie a conta do responsável** com e-mail e senha. O código de confirmação chega por e-mail.
+1. **Crie a conta do responsável** com e-mail e senha (8+ caracteres, com maiúscula, número e caractere especial). O código de confirmação chega por e-mail.
 2. **Crie o perfil da criança:** apelido, cor e desenho (menino ou menina).
 3. **Hora de jogar!** A criança escolhe o jogo, e cada recorde, medalha e nível conquistado fica salvo no perfil dela.
 
@@ -311,6 +311,9 @@ O progresso salvo com `storage.save` vai para a nuvem em lotes, 1,5 s depois de 
 
 - **Dados mínimos da criança:** só apelido, cor e progresso, sem nome real, foto ou e-mail.
 - **Isolamento por responsável:** a partição do DynamoDB é o `sub` do usuário no Cognito, lido do token já validado pelo API Gateway (`requestContext.authorizer.jwt.claims.sub`) e não de algo que o navegador envia.
+- **Senhas só no Cognito:** o site manda a senha por HTTPS direto para o Cognito, que a guarda com hash. Nem a Lambda, nem o DynamoDB, nem o navegador guardam senha. No navegador ficam só os tokens do login (`localStorage`, chave `turma:tokens`): o de acesso vale 15 minutos e o de renovação, 30 dias.
+- **Política de senha:** no mínimo 8 caracteres, com letra maiúscula, número e caractere especial. A regra é aplicada pelo Cognito e repetida no site para avisar antes do envio.
+- **Content-Security-Policy restritiva** e HSTS com preload no site; só o próprio site, o cdnjs (three.js), o Cognito e a API podem ser acessados.
 - **Licença e aceite gravados no servidor:** ficam em linhas que o usuário não consegue alterar pela API.
 - **Permissões mínimas** no papel da Lambda (só a tabela de perfis e o envio pelo SES).
 - **CORS restrito** aos endereços de produção do site.

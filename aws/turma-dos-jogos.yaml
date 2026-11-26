@@ -62,8 +62,8 @@ Resources:
           MinimumLength: 8
           RequireNumbers: true
           RequireLowercase: false
-          RequireUppercase: false
-          RequireSymbols: false
+          RequireUppercase: true
+          RequireSymbols: true
           TemporaryPasswordValidityDays: 7
       Schema:
         # data e versao da politica de privacidade aceita no cadastro (consentimento do responsavel, LGPD art. 14)
